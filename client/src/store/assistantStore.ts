@@ -1,49 +1,14 @@
 import { create } from "zustand";
-
-export type MessageRole = "user" | "assistant";
-
-export interface Message {
-  id: string;
-  role: MessageRole;
-  content: string;
-  timestamp: string;
-}
-
-interface AssistantState {
-  messages: Message[];
-  input: string;
-  isLoading: boolean;
-  isSettingsOpen: boolean;
-  isContextActive: boolean;
-
-  setInput: (value: string) => void;
-  setSettingsOpen: (value: boolean) => void;
-  setContextActive: (value: boolean) => void;
-
-  sendMessage: (message?: string) => void;
-  quickAction: (action: QuickActionType) => void;
-  clearMessages: () => void;
-}
-
-export type QuickActionType =
-  | "summarize"
-  | "question"
-  | "key-points"
-  | "translate";
-
-const pageResponses: Record<QuickActionType, string> = {
-  summarize:
-    "Here is a concise summary of the page:\n\n• AI is rapidly transforming industries and society.\n• Key advancements include machine learning, NLP, and deep learning.\n• Real-world applications include healthcare, finance, and education.\n• Challenges include ethics, bias, data privacy, and security.\n• Future possibilities include AGI, automation, and human-AI collaboration.",
-
-  question:
-    "The article discusses how AI is transforming industries and society. It highlights advancements in machine learning and NLP, real-world applications in healthcare, finance, and education, as well as challenges around ethics, bias, privacy, and security.",
-
-  "key-points":
-    "Key points from this article:\n\n1. AI is transforming industries and society.\n2. Advancements include machine learning, NLP, and deep learning.\n3. Applications span healthcare, finance, and education.\n4. Challenges include ethics, bias, and data privacy.\n5. Future possibilities include AGI, automation, and human-AI collaboration.",
-
-  translate:
-    "Traducción (Español):\n\nLa IA está transformando rápidamente las industrias y la sociedad. Destaca avances como el aprendizaje automático y el procesamiento del lenguaje natural, aplicaciones en atención médica, finanzas y educación, así como desafíos relacionados con la ética, el sesgo y la privacidad de los datos.",
-};
+import api from "../lib/axios";
+import type {
+  AssistantState,
+  ChatContext,
+  ChatRequestPayload,
+  ChatResponse,
+  Message,
+  MessageRole,
+  QuickActionType,
+} from "../types";
 
 const actionLabels: Record<QuickActionType, string> = {
   summarize: "Summarize this page.",
@@ -62,68 +27,75 @@ const createMessage = (role: MessageRole, content: string): Message => ({
   }),
 });
 
+async function postChat(payload: ChatRequestPayload): Promise<Message> {
+  const { data } = await api.post<ChatResponse>("/assistant/chat", payload);
+  return createMessage("assistant", data.message);
+}
+
 export const useAssistantStore = create<AssistantState>((set, get) => ({
   messages: [],
   input: "",
   isLoading: false,
   isSettingsOpen: false,
   isContextActive: true,
+  error: null,
 
   setInput: (value) => set({ input: value }),
-
   setSettingsOpen: (value) => set({ isSettingsOpen: value }),
-
   setContextActive: (value) => set({ isContextActive: value }),
+  clearError: () => set({ error: null }),
+  clearMessages: () => set({ messages: [], input: "", error: null }),
 
-  clearMessages: () =>
-    set({
-      messages: [],
-      input: "",
-    }),
-
-  sendMessage: (message) => {
+  sendMessage: async (message, context?: ChatContext) => {
     const text = (message ?? get().input).trim();
-
     if (!text || get().isLoading) return;
 
     const userMessage = createMessage("user", text);
-
     set((state) => ({
       messages: [...state.messages, userMessage],
       input: "",
       isLoading: true,
+      error: null,
     }));
 
-    setTimeout(() => {
-      const response = createMessage(
-        "assistant",
-        "Based on the current page, the main topic is how AI is transforming industries and society. The page discusses machine learning, NLP, real-world applications, ethical challenges, privacy, and future AI possibilities.",
-      );
-
+    try {
+      const assistantMessage = await postChat({ message: text, context });
       set((state) => ({
-        messages: [...state.messages, response],
+        messages: [...state.messages, assistantMessage],
         isLoading: false,
       }));
-    }, 900);
+    } catch (error) {
+      console.error("Assistant chat error:", error);
+      set({
+        isLoading: false,
+        error: "Unable to get a response. Please try again.",
+      });
+    }
   },
 
-  quickAction: (action) => {
-    const label = actionLabels[action];
+  quickAction: async (action, context?: ChatContext) => {
+    if (get().isLoading) return;
 
-    const userMessage = createMessage("user", label);
-
+    const message = actionLabels[action];
+    const userMessage = createMessage("user", message);
     set((state) => ({
       messages: [...state.messages, userMessage],
       isLoading: true,
+      error: null,
     }));
 
-    setTimeout(() => {
-      const response = createMessage("assistant", pageResponses[action]);
-
+    try {
+      const assistantMessage = await postChat({ message, action, context });
       set((state) => ({
-        messages: [...state.messages, response],
+        messages: [...state.messages, assistantMessage],
         isLoading: false,
       }));
-    }, 700);
+    } catch (error) {
+      console.error("Quick action error:", error);
+      set({
+        isLoading: false,
+        error: "Unable to process this action. Please try again.",
+      });
+    }
   },
 }));

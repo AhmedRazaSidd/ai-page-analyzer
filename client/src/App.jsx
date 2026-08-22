@@ -7,18 +7,18 @@ import Settings from "./components/Settings";
 
 function App() {
   return (
-    <main className="min-h-screen bg-[#050914] p-4 text-white">
-      <div className="mx-auto flex h-[680px] w-full max-w-[420px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#080d17] shadow-2xl shadow-black/40">
+    <main className="h-[600px] w-[420px] bg-[#050914] text-white overflow-hidden">
+      <div className="flex h-full w-full flex-col overflow-hidden border border-white/10 bg-[#080d17] shadow-2xl shadow-black/40">
         <Header />
 
-        <ChatMessage />
+        {/* Only this area scrolls, header/input/footer stay fixed */}
+        <div className="flex-1 overflow-y-auto">
+          <ChatMessage />
+        </div>
 
         <ChatInput />
-
         <QuickActions />
-
         <Footer />
-
         <Settings />
       </div>
     </main>

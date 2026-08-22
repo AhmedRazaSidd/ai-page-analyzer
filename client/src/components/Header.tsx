@@ -6,10 +6,7 @@ import {
 import { useAssistantStore } from "../store/assistantStore";
 
 function Header() {
-  const {
-    setSettingsOpen,
-    setContextActive,
-  } = useAssistantStore();
+  const { setSettingsOpen } = useAssistantStore();
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-white/10 px-4">
@@ -44,7 +41,7 @@ function Header() {
         </button>
 
         <button
-          onClick={() => setContextActive(false)}
+          onClick={() => window.close()}
           className="rounded-lg p-2 text-gray-400 transition hover:bg-white/5 hover:text-white"
           aria-label="Close"
         >

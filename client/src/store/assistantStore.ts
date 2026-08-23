@@ -6,7 +6,6 @@ import type {
   ChatRequestPayload,
   ChatResponse,
   Message,
-  MessageRole,
   QuickActionType,
 } from "../types";
 
@@ -17,55 +16,101 @@ const actionLabels: Record<QuickActionType, string> = {
   translate: "Translate this page to Spanish.",
 };
 
-const createMessage = (role: MessageRole, content: string): Message => ({
-  id: crypto.randomUUID(),
-  role,
-  content,
-  timestamp: new Date().toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  }),
-});
-
-async function postChat(payload: ChatRequestPayload): Promise<Message> {
-  const { data } = await api.post<ChatResponse>("/assistant/chat", payload);
-  return createMessage("assistant", data.message);
-}
-
 export const useAssistantStore = create<AssistantState>((set, get) => ({
   messages: [],
   input: "",
+  conversationId: null,
   isLoading: false,
   isSettingsOpen: false,
   isContextActive: true,
   error: null,
 
   setInput: (value) => set({ input: value }),
-  setSettingsOpen: (value) => set({ isSettingsOpen: value }),
-  setContextActive: (value) => set({ isContextActive: value }),
-  clearError: () => set({ error: null }),
-  clearMessages: () => set({ messages: [], input: "", error: null }),
 
-  sendMessage: async (message, context?: ChatContext) => {
-    const text = (message ?? get().input).trim();
-    if (!text || get().isLoading) return;
+  setSettingsOpen: (value) => set({
+    isSettingsOpen: value,
+  }),
 
-    const userMessage = createMessage("user", text);
-    set((state) => ({
-      messages: [...state.messages, userMessage],
-      input: "",
+  setContextActive: (value) => set({
+    isContextActive: value,
+  }),
+
+  clearError: () => set({
+    error: null,
+  }),
+
+  clearMessages: () => set({
+    messages: [],
+    input: "",
+    error: null,
+    conversationId: null,
+  }),
+
+  /**
+   * Load existing conversation messages from backend.
+   */
+  loadMessages: async (conversationId: string) => {
+    set({
       isLoading: true,
       error: null,
-    }));
+      conversationId,
+    });
 
     try {
-      const assistantMessage = await postChat({ message: text, context });
-      set((state) => ({
-        messages: [...state.messages, assistantMessage],
+      const { data } = await api.get<Message[]>(
+        `/assistant/conversations/${conversationId}/messages`
+      );
+
+      set({
+        messages: data,
         isLoading: false,
-      }));
+      });
+    } catch (error) {
+      console.error("Load messages error:", error);
+
+      set({
+        isLoading: false,
+        error: "Unable to load conversation.",
+      });
+    }
+  },
+
+  /**
+   * Send normal chat message.
+   * Messages are NOT added locally.
+   * Backend saves them and frontend reloads them.
+   */
+  sendMessage: async (message, context?: ChatContext) => {
+    const text = (message ?? get().input).trim();
+
+    if (!text || get().isLoading) return;
+
+    set({
+      isLoading: true,
+      error: null,
+      input: "",
+    });
+
+    try {
+      const payload: ChatRequestPayload = {
+        message: text,
+        conversationId: get().conversationId ?? undefined,
+        context,
+      };
+
+      const { data } = await api.post<ChatResponse>(
+        "/assistant/chat",
+        payload
+      );
+
+      set({
+        conversationId: data.conversationId,
+      });
+
+      await get().loadMessages(data.conversationId);
     } catch (error) {
       console.error("Assistant chat error:", error);
+
       set({
         isLoading: false,
         error: "Unable to get a response. Please try again.",
@@ -73,25 +118,41 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
     }
   },
 
+  /**
+   * Execute quick action.
+   * Backend handles the action and saves the messages.
+   */
   quickAction: async (action, context?: ChatContext) => {
     if (get().isLoading) return;
 
     const message = actionLabels[action];
-    const userMessage = createMessage("user", message);
-    set((state) => ({
-      messages: [...state.messages, userMessage],
+
+    set({
       isLoading: true,
       error: null,
-    }));
+    });
 
     try {
-      const assistantMessage = await postChat({ message, action, context });
-      set((state) => ({
-        messages: [...state.messages, assistantMessage],
-        isLoading: false,
-      }));
+      const payload: ChatRequestPayload = {
+        message,
+        action,
+        conversationId: get().conversationId ?? undefined,
+        context,
+      };
+
+      const { data } = await api.post<ChatResponse>(
+        "/assistant/chat",
+        payload
+      );
+
+      set({
+        conversationId: data.conversationId,
+      });
+
+      await get().loadMessages(data.conversationId);
     } catch (error) {
       console.error("Quick action error:", error);
+
       set({
         isLoading: false,
         error: "Unable to process this action. Please try again.",

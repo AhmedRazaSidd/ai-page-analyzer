@@ -20,18 +20,21 @@ export interface ChatContext {
 }
 
 export interface ChatRequestPayload {
+  conversationId?: string;
   message: string;
   action?: QuickActionType;
   context?: ChatContext;
 }
 
 export interface ChatResponse {
-  message: string;
+  conversationId: string;
 }
 
 export interface AssistantState {
   messages: Message[];
   input: string;
+  conversationId: string | null;
+
   isLoading: boolean;
   isSettingsOpen: boolean;
   isContextActive: boolean;
@@ -42,6 +45,7 @@ export interface AssistantState {
   setContextActive: (value: boolean) => void;
 
   sendMessage: (message?: string, context?: ChatContext) => Promise<void>;
+
   quickAction: (
     action: QuickActionType,
     context?: ChatContext,
@@ -49,4 +53,5 @@ export interface AssistantState {
 
   clearMessages: () => void;
   clearError: () => void;
+  loadMessages: (conversationId: string) => Promise<void>;
 }

@@ -46,7 +46,7 @@ function ChatInput() {
         <button
           type="submit"
           disabled={!input.trim() || isLoading}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
         >
           {isLoading ? (
             <Loader2

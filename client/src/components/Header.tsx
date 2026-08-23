@@ -11,7 +11,7 @@ function Header() {
   return (
     <header className="flex h-16 items-center justify-between border-b border-white/10 px-4">
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-700 shadow-lg shadow-violet-500/20">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-violet-500 to-purple-700 shadow-lg shadow-violet-500/20">
           <Sparkles
             size={18}
             className="text-white"
@@ -33,16 +33,8 @@ function Header() {
 
       <div className="flex items-center gap-1">
         <button
-          onClick={() => setSettingsOpen(true)}
-          className="rounded-lg p-2 text-gray-400 transition hover:bg-white/5 hover:text-white"
-          aria-label="Settings"
-        >
-          <Settings size={16} />
-        </button>
-
-        <button
           onClick={() => window.close()}
-          className="rounded-lg p-2 text-gray-400 transition hover:bg-white/5 hover:text-white"
+          className="rounded-lg p-2 text-gray-400 transition hover:bg-white/5 hover:text-white cursor-pointer ring-0 focus:outline-0"
           aria-label="Close"
         >
           <X size={17} />

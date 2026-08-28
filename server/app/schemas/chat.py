@@ -1,0 +1,31 @@
+from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
+
+
+class ChatContext(BaseModel):
+    url: str | None = None
+    title: str | None = None
+    page_content: str | None = None
+
+
+class ChatRequest(BaseModel):
+    conversation_id: UUID | None = None
+    content: str
+    user_id: UUID
+    context: ChatContext | None = None
+
+
+class ChatResponse(BaseModel):
+    conversation_id: UUID
+    content: str
+
+
+class MessageResponse(BaseModel):
+    id: UUID
+    role: str
+    content: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

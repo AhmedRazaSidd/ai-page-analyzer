@@ -22,7 +22,7 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
   // State
   // -----------------------------------
   conversations: [],
-  
+
   messages: [],
 
   input: "",

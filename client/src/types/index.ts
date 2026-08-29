@@ -65,6 +65,8 @@ export interface AssistantState {
 
   clearMessages: () => void;
 
+  loadConversations: () => Promise<void>;
+
   loadMessages: (conversationId: string) => Promise<void>;
 
   sendMessage: (message?: string, context?: ChatContext) => Promise<void>;

@@ -2,6 +2,7 @@ import {
   CheckCircle2,
   Globe2,
 } from "lucide-react";
+
 import { useAssistantStore } from "../store/assistantStore";
 
 function Footer() {

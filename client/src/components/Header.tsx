@@ -1,21 +1,20 @@
-import {
-  Settings,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { History, Sparkles, X, Plus } from "lucide-react";
+
 import { useAssistantStore } from "../store/assistantStore";
 
-function Header() {
+interface HeaderProps {
+  onOpenConversations: () => void;
+  onNewConversation: () => void;
+}
+
+function Header({ onOpenConversations, onNewConversation }: HeaderProps) {
   const { setSettingsOpen } = useAssistantStore();
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-white/10 px-4">
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-violet-500 to-purple-700 shadow-lg shadow-violet-500/20">
-          <Sparkles
-            size={18}
-            className="text-white"
-          />
+          <Sparkles size={18} className="text-white" />
         </div>
 
         <div>
@@ -32,10 +31,32 @@ function Header() {
       </div>
 
       <div className="flex items-center gap-1">
+        {/* Conversations */}
+        <button
+          onClick={onOpenConversations}
+          className="cursor-pointer rounded-lg p-2 text-gray-400 transition hover:bg-white/5 hover:text-white focus:outline-0"
+          aria-label="Conversations"
+          title="Conversations"
+        >
+          <History size={17} />
+        </button>
+
+        {/* New conversation */}
+        <button
+          onClick={onNewConversation}
+          className="cursor-pointer rounded-lg p-2 text-gray-400 transition hover:bg-white/5 hover:text-white focus:outline-0"
+          aria-label="New conversation"
+          title="New conversation"
+        >
+          <Plus size={17} />
+        </button>
+
+        {/* Close */}
         <button
           onClick={() => window.close()}
-          className="rounded-lg p-2 text-gray-400 transition hover:bg-white/5 hover:text-white cursor-pointer ring-0 focus:outline-0"
+          className="cursor-pointer rounded-lg p-2 text-gray-400 transition hover:bg-white/5 hover:text-white focus:outline-0"
           aria-label="Close"
+          title="Close"
         >
           <X size={17} />
         </button>

@@ -4,13 +4,11 @@ export type QuickActionType =
   | "key-points"
   | "translate";
 
-
 export interface ChatContext {
   url?: string;
   title?: string;
   page_content?: string;
 }
-
 
 export interface Message {
   id: string;
@@ -28,17 +26,21 @@ export interface ChatRequestPayload {
   action?: QuickActionType;
 }
 
-
 export interface ChatResponse {
   conversation_id: string;
   content: string;
   user_id: string;
 }
 
+export interface Conversation {
+  id: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface AssistantState {
   messages: Message[];
-
+  conversations: Conversation[];
   input: string;
 
   user_id: string;
@@ -63,17 +65,12 @@ export interface AssistantState {
 
   clearMessages: () => void;
 
-  loadMessages: (
-    conversationId: string
-  ) => Promise<void>;
+  loadMessages: (conversationId: string) => Promise<void>;
 
-  sendMessage: (
-    message?: string,
-    context?: ChatContext
-  ) => Promise<void>;
+  sendMessage: (message?: string, context?: ChatContext) => Promise<void>;
 
   quickAction: (
     action: QuickActionType,
-    context?: ChatContext
+    context?: ChatContext,
   ) => Promise<void>;
 }

@@ -5,6 +5,7 @@ import type {
   AssistantState,
   ChatRequestPayload,
   ChatResponse,
+  Conversation,
   Message,
   QuickActionType,
 } from "../types";
@@ -20,7 +21,8 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
   // -----------------------------------
   // State
   // -----------------------------------
-
+  conversations: [],
+  
   messages: [],
 
   input: "",
@@ -86,6 +88,28 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
     }),
 
   // -----------------------------------
+  // Load conversation
+  // -----------------------------------
+
+  loadConversations: async () => {
+    try {
+      const { data } = await api.get<Conversation[]>(
+        `/assistant/conversations?user_id=${get().user_id}`,
+      );
+
+      set({
+        conversations: data,
+      });
+    } catch (error) {
+      console.error("Load conversations error:", error);
+
+      set({
+        error: "Unable to load conversations.",
+      });
+    }
+  },
+
+  // -----------------------------------
   // Load conversation messages
   // -----------------------------------
 
@@ -138,10 +162,7 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
         context,
       };
 
-      const { data } = await api.post<ChatResponse>(
-        "/assistant/chat",
-        payload,
-      );
+      const { data } = await api.post<ChatResponse>("/assistant/chat", payload);
 
       set({
         conversation_id: data.conversation_id,
@@ -180,10 +201,7 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
         context,
       };
 
-      const { data } = await api.post<ChatResponse>(
-        "/assistant/chat",
-        payload,
-      );
+      const { data } = await api.post<ChatResponse>("/assistant/chat", payload);
 
       set({
         conversation_id: data.conversation_id,

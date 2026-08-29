@@ -4,8 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
-from app.db.models import Conversation, Message
-from app.schemas.chat import ChatRequest, ChatResponse, MessageResponse
+from app.db.models import Conversation, Message, User
+from app.schemas.chat import (
+    ChatRequest,
+    ChatResponse,
+    MessageResponse,
+    ConversationResponse
+)
 
 
 router = APIRouter(
@@ -14,36 +19,80 @@ router = APIRouter(
 )
 
 
-@router.post("/chat", response_model=ChatResponse)
+@router.get(
+    "/conversations",
+    response_model=list[ConversationResponse],
+)
+def get_conversations(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+):
+    conversations = (
+        db.query(Conversation)
+        .filter(Conversation.user_id == user_id)
+        .order_by(Conversation.updated_at.desc())
+        .all()
+    )
+
+    return conversations
+@router.post(
+    "/chat",
+    response_model=ChatResponse,
+)
 def chat(
     payload: ChatRequest,
     db: Session = Depends(get_db),
 ):
-    # Find existing conversation
+    # -----------------------------------
+    # 1. Get user
+    # -----------------------------------
+
+    user = (
+        db.query(User)
+        .filter(User.id == payload.user_id)
+        .first()
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    # -----------------------------------
+    # 2. Get or create conversation
+    # -----------------------------------
+
     if payload.conversation_id:
+
         conversation = (
             db.query(Conversation)
-            .filter(Conversation.id == payload.conversation_id)
+            .filter(
+                Conversation.id == payload.conversation_id,
+                Conversation.user_id == user.id,
+            )
             .first()
         )
 
         if not conversation:
-            conversation = Conversation(
-                id=payload.conversation_id,
-                user_id=payload.user_id,
+            raise HTTPException(
+                status_code=404,
+                detail="Conversation not found",
             )
-            db.add(conversation)
 
     else:
+
         conversation = Conversation(
-            user_id=payload.user_id,
+            user_id=user.id,
         )
 
         db.add(conversation)
+        db.flush()
 
-    db.flush()
+    # -----------------------------------
+    # 3. Save user message
+    # -----------------------------------
 
-    # Save user message
     user_message = Message(
         conversation_id=conversation.id,
         role="user",
@@ -52,20 +101,40 @@ def chat(
 
     db.add(user_message)
 
-    # Temporary AI response
+    # -----------------------------------
+    # 4. Temporary AI response
+    # -----------------------------------
+
+    assistant_content = "This is a temporary AI response"
+
     assistant_message = Message(
         conversation_id=conversation.id,
         role="assistant",
-        content="This is a temporary AI response",
+        content=assistant_content,
     )
 
     db.add(assistant_message)
 
+    # -----------------------------------
+    # 5. Update conversation timestamp
+    # -----------------------------------
+
+    conversation.updated_at = conversation.updated_at
+
+    # -----------------------------------
+    # 6. Commit
+    # -----------------------------------
+
     db.commit()
 
+    # -----------------------------------
+    # 7. Return response
+    # -----------------------------------
+
     return ChatResponse(
+        user_id=user.id,
         conversation_id=conversation.id,
-        content="Message received successfully",
+        content=assistant_content,
     )
 
 
@@ -77,9 +146,15 @@ def get_messages(
     conversation_id: UUID,
     db: Session = Depends(get_db),
 ):
+    # -----------------------------------
+    # 1. Check conversation
+    # -----------------------------------
+
     conversation = (
         db.query(Conversation)
-        .filter(Conversation.id == conversation_id)
+        .filter(
+            Conversation.id == conversation_id
+        )
         .first()
     )
 
@@ -89,10 +164,18 @@ def get_messages(
             detail="Conversation not found",
         )
 
+    # -----------------------------------
+    # 2. Get messages
+    # -----------------------------------
+
     messages = (
         db.query(Message)
-        .filter(Message.conversation_id == conversation_id)
-        .order_by(Message.created_at.asc())
+        .filter(
+            Message.conversation_id == conversation_id
+        )
+        .order_by(
+            Message.created_at.asc()
+        )
         .all()
     )
 

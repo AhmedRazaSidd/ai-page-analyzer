@@ -1,57 +1,79 @@
-export type MessageRole = "user" | "assistant";
-
 export type QuickActionType =
   | "summarize"
   | "question"
   | "key-points"
   | "translate";
 
-export interface Message {
-  id: string;
-  role: MessageRole;
-  content: string;
-  timestamp: string;
-}
 
 export interface ChatContext {
   url?: string;
   title?: string;
-  content?: string;
+  page_content?: string;
+}
+
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  role: "user" | "assistant";
+  content: string;
+  created_at: string;
 }
 
 export interface ChatRequestPayload {
-  conversationId?: string;
-  message: string;
-  action?: QuickActionType;
+  conversation_id: string | null;
+  content: string;
+  user_id: string;
   context?: ChatContext;
+  action?: QuickActionType;
 }
 
+
 export interface ChatResponse {
-  conversationId: string;
+  conversation_id: string;
+  content: string;
+  user_id: string;
 }
+
 
 export interface AssistantState {
   messages: Message[];
+
   input: string;
-  conversationId: string | null;
+
+  user_id: string;
+
+  conversation_id: string | null;
 
   isLoading: boolean;
+
   isSettingsOpen: boolean;
+
   isContextActive: boolean;
+
   error: string | null;
 
   setInput: (value: string) => void;
+
   setSettingsOpen: (value: boolean) => void;
+
   setContextActive: (value: boolean) => void;
 
-  sendMessage: (message?: string, context?: ChatContext) => Promise<void>;
+  clearError: () => void;
+
+  clearMessages: () => void;
+
+  loadMessages: (
+    conversationId: string
+  ) => Promise<void>;
+
+  sendMessage: (
+    message?: string,
+    context?: ChatContext
+  ) => Promise<void>;
 
   quickAction: (
     action: QuickActionType,
-    context?: ChatContext,
+    context?: ChatContext
   ) => Promise<void>;
-
-  clearMessages: () => void;
-  clearError: () => void;
-  loadMessages: (conversationId: string) => Promise<void>;
 }

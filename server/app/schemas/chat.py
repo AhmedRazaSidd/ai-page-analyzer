@@ -20,12 +20,25 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     conversation_id: UUID
     content: str
+    user_id: UUID
 
 
 class MessageResponse(BaseModel):
     id: UUID
+    conversation_id: UUID
     role: str
     content: str
     created_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+    
+    
+    
+class ConversationResponse(BaseModel):
+    id: UUID
+    created_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

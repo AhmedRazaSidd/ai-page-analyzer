@@ -10,7 +10,8 @@ type Conversation = {
 interface ConversationSidebarProps {
   conversations: Conversation[];
   activeConversationId: string | null;
-  onSelect: (conversationId: string) => void;
+  onSelect: (conversationId: string) => Promise<void>;
+  handleDelete: (conversationId: string) => Promise<void>;
   onNewConversation: () => void;
   onClose: () => void;
 }
@@ -21,6 +22,7 @@ function ConversationSidebar({
   onSelect,
   onNewConversation,
   onClose,
+  handleDelete,
 }: ConversationSidebarProps) {
   return (
     <aside className="absolute inset-0 z-50 flex flex-col bg-[#080d17]">
@@ -51,6 +53,7 @@ function ConversationSidebar({
               conversation={conversation}
               isActive={conversation.id === activeConversationId}
               onClick={() => onSelect(conversation.id)}
+              handleDelete={handleDelete}
             />
           ))
         )}

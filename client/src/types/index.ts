@@ -75,4 +75,6 @@ export interface AssistantState {
     action: QuickActionType,
     context?: ChatContext,
   ) => Promise<void>;
+
+  deleteConversation:(conversationId:string) => Promise<void>
 }

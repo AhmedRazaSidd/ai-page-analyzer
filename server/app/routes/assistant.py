@@ -180,3 +180,32 @@ def get_messages(
     )
 
     return messages
+
+@router.delete("/conversation/{conversation_id}")
+def delete_conversation(
+    conversation_id:UUID,
+    user_id:UUID,
+    db: Session = Depends(get_db)
+):
+    conversation = (
+        db.query(Conversation)
+        .filter(
+            Conversation.id == conversation_id,
+            Conversation.user_id == user_id
+        )
+        .first()
+    )
+    
+    if not conversation:
+        raise HTTPException(
+            status_code=404,
+            detail="Conversation not found"
+        )
+        
+    db.delete(conversation)
+    db.commit()
+    
+    return {
+        "message":"Conversation deleted successfully"
+    }
+    

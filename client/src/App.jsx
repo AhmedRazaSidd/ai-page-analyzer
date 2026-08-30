@@ -20,6 +20,7 @@ function App() {
     loadConversations,
     loadMessages,
     clearMessages,
+    deleteConversation,
   } = useAssistantStore();
 
   useEffect(() => {
@@ -38,22 +39,26 @@ function App() {
     setIsConversationOpen(false);
   };
 
-  if (!hasSeenWelcome) {
-    return (
-      <Welcome
-        onOpenAssistant={() => setHasSeenWelcome(true)}
-      />
+  const handleDelete = async (conversationId) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this conversation?",
     );
+
+    if (!confirmed) return;
+
+    await deleteConversation(conversationId);
+    setIsConversationOpen(false);
+  };
+
+  if (!hasSeenWelcome) {
+    return <Welcome onOpenAssistant={() => setHasSeenWelcome(true)} />;
   }
 
   return (
     <main className="relative h-150 w-105 overflow-hidden bg-[#050914] text-white">
       <div className="flex h-full w-full flex-col overflow-hidden border border-white/10 bg-[#080d17] shadow-2xl shadow-black/40">
-        
         <Header
-          onOpenConversations={() =>
-            setIsConversationOpen(true)
-          }
+          onOpenConversations={() => setIsConversationOpen(true)}
           onNewConversation={handleNewConversation}
         />
 
@@ -72,6 +77,7 @@ function App() {
             conversations={conversations}
             activeConversationId={conversationId}
             onSelect={handleSelectConversation}
+            handleDelete={handleDelete}
             onNewConversation={handleNewConversation}
             onClose={() => setIsConversationOpen(false)}
           />

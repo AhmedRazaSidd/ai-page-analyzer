@@ -217,4 +217,35 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
       });
     }
   },
+
+  deleteConversation: async (conversationId: string) => {
+    try {
+      await api.delete(
+        `/assistant/conversation/${conversationId}?user_id=${get().user_id}`,
+      );
+
+      const currentConversationId = get().conversation_id;
+
+      set((state) => ({
+        conversation: state.conversations.filter(
+          (conversation) => conversation.id !== conversationId,
+        ),
+
+        // if deleted chat open
+        ...(currentConversationId === conversationId
+          ? {
+              messages: [],
+              conversation_id: null,
+            }
+          : {}),
+      }));
+
+      
+    } catch (error) {
+      console.error("Delete conversation erorr:", error);
+      set({
+        error: "Unable to delete conversation.",
+      });
+    }
+  },
 }));

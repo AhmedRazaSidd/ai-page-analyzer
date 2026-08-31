@@ -1,17 +1,13 @@
+import { Conversation } from "../types";
 import ConversationItem from "./ConversationItem";
 import NewConversationButton from "./NewConversationButton";
-
-type Conversation = {
-  id: string;
-  created_at: string;
-  updated_at: string;
-};
 
 interface ConversationSidebarProps {
   conversations: Conversation[];
   activeConversationId: string | null;
   onSelect: (conversationId: string) => Promise<void>;
   handleDelete: (conversationId: string) => Promise<void>;
+  handleUpdateTitle: (conversationId: string, title: string) => Promise<void>;
   onNewConversation: () => void;
   onClose: () => void;
 }
@@ -23,6 +19,7 @@ function ConversationSidebar({
   onNewConversation,
   onClose,
   handleDelete,
+  handleUpdateTitle,
 }: ConversationSidebarProps) {
   return (
     <aside className="absolute inset-0 z-50 flex flex-col bg-[#080d17]">
@@ -54,6 +51,7 @@ function ConversationSidebar({
               isActive={conversation.id === activeConversationId}
               onClick={() => onSelect(conversation.id)}
               handleDelete={handleDelete}
+              handleUpdateTitle={handleUpdateTitle}
             />
           ))
         )}

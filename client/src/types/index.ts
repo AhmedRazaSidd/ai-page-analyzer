@@ -34,6 +34,7 @@ export interface ChatResponse {
 
 export interface Conversation {
   id: string;
+  title: string;
   created_at: string;
   updated_at: string;
 }
@@ -76,5 +77,9 @@ export interface AssistantState {
     context?: ChatContext,
   ) => Promise<void>;
 
-  deleteConversation:(conversationId:string) => Promise<void>
+  deleteConversation: (conversationId: string) => Promise<void>;
+  updateConversationTitle: (
+    conversationId: string,
+    title: string,
+  ) => Promise<void>;
 }

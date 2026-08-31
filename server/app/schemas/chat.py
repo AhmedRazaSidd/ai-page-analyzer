@@ -38,6 +38,8 @@ class MessageResponse(BaseModel):
     
 class ConversationResponse(BaseModel):
     id: UUID
+    user_id:UUID
+    title:str
     created_at: datetime
     updated_at: datetime
 

@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from app.db.database import get_db
 from app.db.models import Conversation, Message, User
@@ -208,4 +209,42 @@ def delete_conversation(
     return {
         "message":"Conversation deleted successfully"
     }
+
+
+@router.patch("/conversation/{conversation_id}")
+def update_conversation_title(
+    conversation_id:UUID,
+    user_id:UUID,
+    title:str,
+    db: Session = Depends(get_db)
+):
+    conversation = (
+        db.query(Conversation)
+        .filter(
+            Conversation.id == conversation_id,
+            Conversation.user_id == user_id
+        )
+        .first()
+    )
     
+    if not conversation:
+        raise HTTPException(
+            status_code=404,
+            detail="Conversation not found"
+        )
+    
+    title = title.strip()
+    
+    if not title:
+        raise HTTPException(
+            status_code=400,
+            detail="Title connot be empty"
+        )
+    
+    conversation.title = title[:255]
+    conversation.updated_at = datetime.now()
+    
+    db.commit()
+    db.refresh(conversation)
+    
+    return conversation

@@ -35,6 +35,13 @@ class Conversation(Base):
         primary_key=True,
         default=uuid4,
     )
+    
+    title: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        default="New Conversation",
+    )
+
 
     user_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id"),

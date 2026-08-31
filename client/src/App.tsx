@@ -16,11 +16,12 @@ function App() {
 
   const {
     conversations,
-    conversationId,
+    conversation_id,
     loadConversations,
     loadMessages,
     clearMessages,
     deleteConversation,
+    updateConversationTitle,
   } = useAssistantStore();
 
   useEffect(() => {
@@ -34,12 +35,12 @@ function App() {
     setIsConversationOpen(false);
   };
 
-  const handleSelectConversation = async (id) => {
+  const handleSelectConversation = async (id:string) => {
     await loadMessages(id);
     setIsConversationOpen(false);
   };
 
-  const handleDelete = async (conversationId) => {
+  const handleDelete = async (conversationId:string) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this conversation?",
     );
@@ -48,6 +49,10 @@ function App() {
 
     await deleteConversation(conversationId);
     setIsConversationOpen(false);
+  };
+
+  const handleUpdateTitle = async (conversationId:string, title:string) => {
+    await updateConversationTitle(conversationId, title);
   };
 
   if (!hasSeenWelcome) {
@@ -75,11 +80,12 @@ function App() {
         {isConversationOpen && (
           <ConversationSidebar
             conversations={conversations}
-            activeConversationId={conversationId}
+            activeConversationId={conversation_id}
             onSelect={handleSelectConversation}
             handleDelete={handleDelete}
             onNewConversation={handleNewConversation}
             onClose={() => setIsConversationOpen(false)}
+            handleUpdateTitle={handleUpdateTitle}
           />
         )}
       </div>

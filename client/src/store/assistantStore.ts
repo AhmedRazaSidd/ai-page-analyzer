@@ -239,12 +239,47 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
             }
           : {}),
       }));
-
-      
     } catch (error) {
       console.error("Delete conversation erorr:", error);
       set({
         error: "Unable to delete conversation.",
+      });
+    }
+  },
+
+  updateConversationTitle: async (conversationId: string, title: string) => {
+    const trimmedTitle = title.trim();
+
+    if (!trimmedTitle) return;
+
+    try {
+      const { data } = await api.patch(
+        `/assistant/conversation/${conversationId}`,
+        null,
+        {
+          params: {
+            user_id: get().user_id,
+            title: trimmedTitle,
+          },
+        },
+      );
+
+      set((state) => ({
+        conversations: state.conversations.map((conversation) =>
+          conversation.id === conversationId
+            ? {
+                ...conversation,
+                title: data.title,
+                updated_at: data.updated_at,
+              }
+            : conversation,
+        ),
+      }));
+    } catch (error) {
+      console.error("Update conversation title error:", error);
+
+      set({
+        error: "Unable to update conversation title.",
       });
     }
   },

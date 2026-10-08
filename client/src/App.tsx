@@ -17,12 +17,19 @@ function App() {
   const {
     conversations,
     conversation_id,
+    initializeAnonymousSession,
     loadConversations,
     loadMessages,
     clearMessages,
     deleteConversation,
     updateConversationTitle,
   } = useAssistantStore();
+
+  useEffect(() => {
+    if (!hasSeenWelcome) return;
+
+    initializeAnonymousSession();
+  }, [hasSeenWelcome, initializeAnonymousSession]);
 
   useEffect(() => {
     if (hasSeenWelcome) {
@@ -35,12 +42,12 @@ function App() {
     setIsConversationOpen(false);
   };
 
-  const handleSelectConversation = async (id:string) => {
+  const handleSelectConversation = async (id: string) => {
     await loadMessages(id);
     setIsConversationOpen(false);
   };
 
-  const handleDelete = async (conversationId:string) => {
+  const handleDelete = async (conversationId: string) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this conversation?",
     );
@@ -51,7 +58,7 @@ function App() {
     setIsConversationOpen(false);
   };
 
-  const handleUpdateTitle = async (conversationId:string, title:string) => {
+  const handleUpdateTitle = async (conversationId: string, title: string) => {
     await updateConversationTitle(conversationId, title);
   };
 

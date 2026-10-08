@@ -13,15 +13,12 @@ class ChatContext(BaseModel):
 class ChatRequest(BaseModel):
     conversation_id: UUID | None = None
     content: str
-    user_id: UUID
     context: ChatContext | None = None
 
 
 class ChatResponse(BaseModel):
     conversation_id: UUID
     content: str
-    user_id: UUID
-
 
 class MessageResponse(BaseModel):
     id: UUID

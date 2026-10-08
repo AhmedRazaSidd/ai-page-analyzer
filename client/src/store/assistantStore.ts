@@ -27,8 +27,6 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
 
   input: "",
 
-  user_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-
   conversation_id: null,
 
   isLoading: false,
@@ -87,6 +85,17 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
       conversation_id: null,
     }),
 
+  initializeAnonymousSession: async () => {
+    try {
+      await api.post("/assistant/session");
+    } catch (error) {
+      console.error("Anonymous session initialization error:", error);
+      set({
+        error: "Unable to initilize anonymous session",
+      });
+    }
+  },
+
   // -----------------------------------
   // Load conversation
   // -----------------------------------
@@ -94,7 +103,7 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
   loadConversations: async () => {
     try {
       const { data } = await api.get<Conversation[]>(
-        `/assistant/conversations?user_id=${get().user_id}`,
+        `/assistant/conversations`,
       );
 
       set({
@@ -157,7 +166,6 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
     try {
       const payload: ChatRequestPayload = {
         content: text,
-        user_id: get().user_id,
         conversation_id: get().conversation_id ?? null,
         context,
       };
@@ -196,7 +204,6 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
     try {
       const payload: ChatRequestPayload = {
         content: message,
-        user_id: get().user_id,
         conversation_id: get().conversation_id ?? null,
         context,
       };
@@ -220,9 +227,7 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
 
   deleteConversation: async (conversationId: string) => {
     try {
-      await api.delete(
-        `/assistant/conversation/${conversationId}?user_id=${get().user_id}`,
-      );
+      await api.delete(`/assistant/conversation/${conversationId}`);
 
       const currentConversationId = get().conversation_id;
 
@@ -258,7 +263,6 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
         null,
         {
           params: {
-            user_id: get().user_id,
             title: trimmedTitle,
           },
         },

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes.assistant import router as assistant_router
+from app.routes.session import router as session_router
 
 app = FastAPI(
     title="AI Page Assistant API",
@@ -16,6 +17,7 @@ app.add_middleware(
 )
 
 app.include_router(assistant_router)
+app.include_router(session_router)
 
 @app.get("/health")
 def health():

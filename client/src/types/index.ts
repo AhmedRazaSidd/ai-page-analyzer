@@ -21,7 +21,6 @@ export interface Message {
 export interface ChatRequestPayload {
   conversation_id: string | null;
   content: string;
-  user_id: string;
   context?: ChatContext;
   action?: QuickActionType;
 }
@@ -44,7 +43,6 @@ export interface AssistantState {
   conversations: Conversation[];
   input: string;
 
-  user_id: string;
 
   conversation_id: string | null;
 
@@ -65,6 +63,8 @@ export interface AssistantState {
   clearError: () => void;
 
   clearMessages: () => void;
+  
+  initializeAnonymousSession: () => Promise<void>;
 
   loadConversations: () => Promise<void>;
 

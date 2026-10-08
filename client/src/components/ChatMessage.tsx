@@ -1,5 +1,6 @@
 import { Sparkles } from "lucide-react";
 import { useAssistantStore } from "../store/assistantStore";
+import moment from "moment";
 
 function ChatMessage() {
   const messages = useAssistantStore(
@@ -71,7 +72,7 @@ function ChatMessage() {
                         : "text-gray-600"
                     }`}
                   >
-                    {message.timestamp}
+                    {message.created_at ? moment(message.created_at).format("h:mm A") : ""}
                   </div>
                 </div>
               </div>

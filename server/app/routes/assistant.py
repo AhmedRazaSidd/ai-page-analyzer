@@ -2,15 +2,16 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime,timezone
 
 from app.db.database import get_db
 from app.db.models import Conversation, Message, User
+from app.dependencies.auth import get_current_user
 from app.schemas.chat import (
     ChatRequest,
     ChatResponse,
     MessageResponse,
-    ConversationResponse
+    ConversationResponse,
 )
 
 
@@ -25,12 +26,12 @@ router = APIRouter(
     response_model=list[ConversationResponse],
 )
 def get_conversations(
-    user_id: UUID,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     conversations = (
         db.query(Conversation)
-        .filter(Conversation.user_id == user_id)
+        .filter(Conversation.user_id == current_user.id)
         .order_by(Conversation.updated_at.desc())
         .all()
     )
@@ -42,27 +43,13 @@ def get_conversations(
 )
 def chat(
     payload: ChatRequest,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # -----------------------------------
-    # 1. Get user
-    # -----------------------------------
 
-    user = (
-        db.query(User)
-        .filter(User.id == payload.user_id)
-        .first()
-    )
 
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found",
-        )
 
-    # -----------------------------------
-    # 2. Get or create conversation
-    # -----------------------------------
+    user = current_user
 
     if payload.conversation_id:
 
@@ -115,25 +102,15 @@ def chat(
     )
 
     db.add(assistant_message)
+    
 
-    # -----------------------------------
-    # 5. Update conversation timestamp
-    # -----------------------------------
 
-    conversation.updated_at = conversation.updated_at
-
-    # -----------------------------------
-    # 6. Commit
-    # -----------------------------------
+    conversation.updated_at = datetime.now()
 
     db.commit()
 
-    # -----------------------------------
-    # 7. Return response
-    # -----------------------------------
 
     return ChatResponse(
-        user_id=user.id,
         conversation_id=conversation.id,
         content=assistant_content,
     )
@@ -145,16 +122,15 @@ def chat(
 )
 def get_messages(
     conversation_id: UUID,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # -----------------------------------
-    # 1. Check conversation
-    # -----------------------------------
 
     conversation = (
         db.query(Conversation)
         .filter(
-            Conversation.id == conversation_id
+            Conversation.id == conversation_id,
+            Conversation.user_id == current_user.id
         )
         .first()
     )
@@ -165,9 +141,6 @@ def get_messages(
             detail="Conversation not found",
         )
 
-    # -----------------------------------
-    # 2. Get messages
-    # -----------------------------------
 
     messages = (
         db.query(Message)
@@ -185,14 +158,14 @@ def get_messages(
 @router.delete("/conversation/{conversation_id}")
 def delete_conversation(
     conversation_id:UUID,
-    user_id:UUID,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     conversation = (
         db.query(Conversation)
         .filter(
             Conversation.id == conversation_id,
-            Conversation.user_id == user_id
+            Conversation.user_id == current_user.id
         )
         .first()
     )
@@ -214,15 +187,15 @@ def delete_conversation(
 @router.patch("/conversation/{conversation_id}")
 def update_conversation_title(
     conversation_id:UUID,
-    user_id:UUID,
     title:str,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     conversation = (
         db.query(Conversation)
         .filter(
             Conversation.id == conversation_id,
-            Conversation.user_id == user_id
+            Conversation.user_id == current_user.id
         )
         .first()
     )

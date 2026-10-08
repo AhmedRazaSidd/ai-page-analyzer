@@ -15,6 +15,22 @@ class User(Base):
         default=uuid4,
     )
 
+    name: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    email: Mapped[str | None] = mapped_column(
+        String(255),
+        unique=True,
+        nullable=True,
+    )
+
+    password_hash: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.now,
@@ -27,7 +43,55 @@ class User(Base):
         cascade="all, delete-orphan",
     )
 
+    anonymous_sessions: Mapped[list["AnonymousSession"]] = relationship(
+        "AnonymousSession",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
+
+class AnonymousSession(Base):
+    __tablename__ = "anonymous_sessions"
+
+    id: Mapped[UUID] = mapped_column(
+        primary_key=True,
+        default=uuid4,
+    )
+
+    token_hash: Mapped[str] = mapped_column(
+        String(255),
+        unique=True,
+        nullable=False,
+    )
+
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+    )
+
+    last_seen_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.now,
+        nullable=False,
+    )
+    
+
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+    
+    
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.now,
+        nullable=False,
+    )
+
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="anonymous_sessions",
+    )
 class Conversation(Base):
     __tablename__ = "conversations"
 

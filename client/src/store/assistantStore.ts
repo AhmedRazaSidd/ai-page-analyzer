@@ -17,6 +17,28 @@ const actionLabels: Record<QuickActionType, string> = {
   translate: "Translate this page to Spanish.",
 };
 
+const ACTIVE_CONVERSATION_KEY = "ai-page-assistant:active-conversation";
+
+function getSavedConversationId(): string | null {
+  try {
+    return localStorage.getItem(ACTIVE_CONVERSATION_KEY);
+  } catch (error) {
+    return null;
+  }
+}
+
+function saveConversationId(id: string | null): void {
+  try {
+    if (id) {
+      localStorage.setItem(ACTIVE_CONVERSATION_KEY, id);
+    } else {
+      localStorage.removeItem(ACTIVE_CONVERSATION_KEY);
+    }
+  } catch (error) {
+    // Storage may be unavailable in some extension contexts.
+  }
+}
+
 async function streamAssistantMessage(
   payload: ChatRequestPayload,
   clearInput: boolean,
@@ -105,7 +127,7 @@ async function streamAssistantMessage(
           const userMessage = data.user_message as Message;
 
           receivedMeta = true;
-
+          saveConversationId(data.conversation_id);
           store.setState((state) => {
             const previousMessages = state.messages.filter(
               (message) =>
@@ -158,6 +180,8 @@ async function streamAssistantMessage(
         case "done": {
           const assistantMessage = data.assistant_message as Message;
 
+          saveConversationId(data.conversation_id);
+
           if (assistantMessage) {
             store.setState((state) => {
               const hasDraft = state.messages.some(
@@ -188,6 +212,7 @@ async function streamAssistantMessage(
               : "The assistant stream failed.";
       }
     };
+
     try {
       while (true) {
         const { value, done } = await reader.read();
@@ -211,9 +236,12 @@ async function streamAssistantMessage(
     }
 
     if (streamError) throw new Error(streamError);
+
     if (!completed) {
       throw new Error("The stream ended before completion.");
     }
+
+    await store.getState().loadConversations();
   } catch (error) {
     console.error("Assistant streaming error:", error);
 
@@ -243,7 +271,7 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
 
   input: "",
 
-  conversation_id: null,
+  conversation_id: getSavedConversationId(),
 
   streamStatus: "idle",
 
@@ -295,7 +323,8 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
   // Clear conversation
   // -----------------------------------
 
-  clearMessages: () =>
+  clearMessages: () => {
+    saveConversationId(null);
     set({
       messages: [],
       input: "",
@@ -303,7 +332,8 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
       conversation_id: null,
       isLoading: false,
       streamStatus: "idle",
-    }),
+    });
+  },
 
   initializeAnonymousSession: async () => {
     try {
@@ -343,6 +373,8 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
   // -----------------------------------
 
   loadMessages: async (conversation_id: string) => {
+    saveConversationId(conversation_id)
+    
     set({
       isLoading: true,
       error: null,

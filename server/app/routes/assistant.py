@@ -51,6 +51,9 @@ def chat(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    
+    print("CHAT USER ID:", current_user.id)
+    print("CONVERSATION ID:", conversation.id)
 
     user = current_user
 

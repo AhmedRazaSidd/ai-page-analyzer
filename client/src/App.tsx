@@ -11,7 +11,14 @@ import ConversationSidebar from "./components/ConversationSidebar";
 import { useAssistantStore } from "./store/assistantStore";
 
 function App() {
-  const [hasSeenWelcome, setHasSeenWelcome] = useState(false);
+  const [hasSeenWelcome, setHasSeenWelcome] = useState(() => {
+    try {
+      return localStorage.getItem("ai-page-assistant:welcome-seen") === "true";
+    } catch (error) {
+      return false;
+    }
+  });
+
   const [isConversationOpen, setIsConversationOpen] = useState(false);
 
   const {
@@ -28,14 +35,40 @@ function App() {
   useEffect(() => {
     if (!hasSeenWelcome) return;
 
-    initializeAnonymousSession();
-  }, [hasSeenWelcome, initializeAnonymousSession]);
+    let cancelled = false;
 
-  useEffect(() => {
-    if (hasSeenWelcome) {
-      loadConversations();
-    }
-  }, [hasSeenWelcome, loadConversations]);
+    const initializeApp = async () => {
+      try {
+        await initializeAnonymousSession();
+
+        if (cancelled) return;
+
+        await loadConversations();
+
+        if (cancelled) return;
+
+        const savedConversationId =
+          useAssistantStore.getState().conversation_id;
+
+        if (savedConversationId) {
+          await loadMessages(savedConversationId);
+        }
+      } catch (error) {
+        console.error("Failed to initialize app:", error);
+      }
+    };
+
+    void initializeApp();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    hasSeenWelcome,
+    initializeAnonymousSession,
+    loadConversations,
+    loadMessages,
+  ]);
 
   const handleNewConversation = () => {
     clearMessages();
@@ -63,7 +96,18 @@ function App() {
   };
 
   if (!hasSeenWelcome) {
-    return <Welcome onOpenAssistant={() => setHasSeenWelcome(true)} />;
+    return (
+      <Welcome
+        onOpenAssistant={() => {
+          try {
+            localStorage.setItem("ai-page-assistant:welcome-seen", "true");
+          } catch (error) {
+            // Storage may be unavailable
+          }
+          setHasSeenWelcome(true);
+        }}
+      />
+    );
   }
 
   return (

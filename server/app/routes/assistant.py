@@ -1,4 +1,7 @@
 from uuid import UUID
+import asyncio
+import json
+from fastapi.responses import StreamingResponse
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -37,6 +40,8 @@ def get_conversations(
     )
 
     return conversations
+
+
 @router.post(
     "/chat",
     response_model=ChatResponse,
@@ -46,8 +51,6 @@ def chat(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-
-
 
     user = current_user
 
@@ -113,6 +116,136 @@ def chat(
     return ChatResponse(
         conversation_id=conversation.id,
         content=assistant_content,
+    )
+
+@router.post("/chat/stream")
+async def chat_stream(
+    payload: ChatRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # 1. Find existing conversation or create a new one
+    if payload.conversation_id:
+        conversation = (
+            db.query(Conversation)
+            .filter(
+                Conversation.id == payload.conversation_id,
+                Conversation.user_id == current_user.id,
+            )
+            .first()
+        )
+
+        if not conversation:
+            raise HTTPException(
+                status_code=404,
+                detail="Conversation not found",
+            )
+    else:
+        conversation = Conversation(user_id=current_user.id)
+        db.add(conversation)
+        db.flush()
+
+    # 2. Save user message
+    user_message = Message(
+        conversation_id=conversation.id,
+        role="user",
+        content=payload.content,
+    )
+
+    db.add(user_message)
+    conversation.updated_at = datetime.now()
+
+    db.commit()
+    db.refresh(conversation)
+    db.refresh(user_message)
+
+    conversation_id = str(conversation.id)
+
+    user_message_data = {
+        "id": str(user_message.id),
+        "conversation_id": conversation_id,
+        "role": user_message.role,
+        "content": user_message.content,
+        "created_at": user_message.created_at.isoformat(),
+    }
+
+    # 3. SSE event helper
+    def event(name: str, data: dict) -> str:
+        return f"event: {name}\ndata: {json.dumps(data)}\n\n"
+
+    # 4. Stream response
+    async def event_stream():
+        try:
+            yield event(
+                "meta",
+                {
+                    "conversation_id": conversation_id,
+                    "user_message": user_message_data,
+                },
+            )
+
+            yield event("status", {"status": "thinking"})
+            await asyncio.sleep(1)
+
+            response = (
+                "This is a streamed response. "
+                "Later, we will replace this with the actual AI response."
+            )
+
+            yield event("status", {"status": "generating"})
+
+            words = response.split(" ")
+
+            for index, word in enumerate(words):
+                chunk = word if index == 0 else f" {word}"
+
+                yield event("delta", {"content": chunk})
+                await asyncio.sleep(0.08)
+
+            # 5. Save completed assistant response
+            assistant_message = Message(
+                conversation_id=conversation.id,
+                role="assistant",
+                content=response,
+            )
+
+            db.add(assistant_message)
+            conversation.updated_at = datetime.now()
+
+            db.commit()
+            db.refresh(assistant_message)
+
+            yield event(
+                "done",
+                {
+                    "conversation_id": conversation_id,
+                    "assistant_message": {
+                        "id": str(assistant_message.id),
+                        "conversation_id": conversation_id,
+                        "role": "assistant",
+                        "content": assistant_message.content,
+                        "created_at": (
+                            assistant_message.created_at.isoformat()
+                        ),
+                    },
+                },
+            )
+
+        except Exception:
+            db.rollback()
+
+            yield event(
+                "error",
+                {"message": "Unable to complete the response."},
+            )
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
     )
 
 

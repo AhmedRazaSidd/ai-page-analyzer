@@ -4,10 +4,10 @@ import moment from "moment";
 import { useEffect, useRef } from "react";
 
 function ChatMessage() {
-  
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const messages = useAssistantStore((state) => state.messages);
   const isLoading = useAssistantStore((state) => state.isLoading);
+  const streamStatus = useAssistantStore((state) => state.streamStatus);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
@@ -41,53 +41,51 @@ function ChatMessage() {
             return (
               <div
                 key={message.id}
-                className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                className={`flex items-start gap-2 ${
+                  isUser ? "justify-end" : "justify-start"
+                }`}
               >
                 {!isUser && (
-                  <div className="mr-2 mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-600">
+                  <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-600">
                     <Sparkles size={14} className="text-white" />
                   </div>
                 )}
 
                 <div
-                  className={`max-w-[82%] rounded-2xl px-3 py-2.5 text-xs leading-5 ${
+                  className={`min-w-0 max-w-[82%] rounded-2xl px-3 py-2.5 text-xs leading-5 ${
                     isUser
                       ? "rounded-br-sm bg-violet-700 text-white"
                       : "rounded-bl-sm border border-white/5 bg-[#151a27] text-gray-300"
                   }`}
                 >
-                  <div className="whitespace-pre-line">{message.content}</div>
-
-                  <div
-                    className={`mt-1 text-[9px] ${
-                      isUser ? "text-violet-200" : "text-gray-600"
-                    }`}
-                  >
-                    {message.created_at
-                      ? moment(message.created_at).format("h:mm A")
-                      : ""}
+                  <div className="whitespace-pre-wrap wrap-break-word">
+                    {message.content ? (
+                      message.content
+                    ) : !isUser && streamStatus !== "idle" ? (
+                      <div className="flex items-center gap-2 py-1">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-violet-400/20 border-t-violet-400" />
+                      </div>
+                    ) : null}
                   </div>
+
+                  {message.created_at && (
+                    <time
+                      dateTime={message.created_at}
+                      className={`mt-1 block text-right text-[9px] ${
+                        isUser ? "text-violet-200" : "text-gray-500"
+                      }`}
+                    >
+                      {moment(message.created_at).format("h:mm A")}
+                    </time>
+                  )}
                 </div>
               </div>
             );
           })}
 
-          {isLoading && (
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-600">
-                <Sparkles size={14} className="text-white" />
-              </div>
+          <AssistantTypingIndicator status={streamStatus} />
 
-              <div className="rounded-xl bg-[#151a27] px-4 py-3">
-                <div className="flex gap-1">
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-400" />
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-400 [animation-delay:150ms]" />
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-400 [animation-delay:300ms]" />
-                </div>
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} aria-hidden="true" />
         </div>
       )}
     </div>
@@ -95,3 +93,37 @@ function ChatMessage() {
 }
 
 export default ChatMessage;
+
+type AssistantTypingIndicatorProps = {
+  status: "idle" | "thinking" | "generating";
+};
+
+function AssistantTypingIndicator({ status }: AssistantTypingIndicatorProps) {
+  if (status === "idle") return null;
+
+  const label =
+    status === "thinking" ? "Thinking..." : "Generating response...";
+
+  return (
+    <div
+      className="flex items-start gap-2 py-1"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-600">
+        <Sparkles size={14} className="text-white" />
+      </div>
+
+      <div className="flex min-h-8 flex-col justify-center gap-2 py-1">
+        <p className="text-xs font-medium text-slate-400">{label}</p>
+
+        <div className="flex items-center gap-1.5" aria-hidden="true">
+          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-400 [animation-delay:-0.3s]" />
+          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-400 [animation-delay:-0.15s]" />
+          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-400" />
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -42,6 +42,7 @@ export interface AssistantState {
   messages: Message[];
   conversations: Conversation[];
   input: string;
+  streamStatus: "idle" | "thinking" | "generating"
 
 
   conversation_id: string | null;

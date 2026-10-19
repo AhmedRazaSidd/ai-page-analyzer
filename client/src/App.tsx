@@ -80,6 +80,11 @@ function App() {
     setIsConversationOpen(false);
   };
 
+  const handleOpenConversations = async () => {
+    await loadConversations();
+    setIsConversationOpen(true);
+  };
+
   const handleDelete = async (conversationId: string) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this conversation?",
@@ -113,11 +118,10 @@ function App() {
   return (
     <main className="relative h-150 w-105 overflow-hidden bg-[#050914] text-white">
       <div className="flex h-full w-full flex-col overflow-hidden border border-white/10 bg-[#080d17] shadow-2xl shadow-black/40">
-        <Header
-          onOpenConversations={() => setIsConversationOpen(true)}
+       <Header
+          onOpenConversations={handleOpenConversations}
           onNewConversation={handleNewConversation}
         />
-
         <div className="flex-1 overflow-y-auto">
           <ChatMessage />
         </div>

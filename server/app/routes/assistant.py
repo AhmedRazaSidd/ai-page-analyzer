@@ -127,8 +127,27 @@ async def chat_stream(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    
+    print("CURRENT USER ID:", current_user.id)
+    print("REQUESTED CONVERSATION ID:", payload.conversation_id)
     # 1. Find existing conversation or create a new one
     if payload.conversation_id:
+        print("CURRENT USER ID:", current_user.id)
+        print("REQUESTED CONVERSATION ID:", payload.conversation_id)
+
+        existing_conversation = (
+            db.query(Conversation)
+            .filter(
+                Conversation.id == payload.conversation_id,
+            )
+            .first()
+        )
+
+        print(
+            "CONVERSATION OWNER ID:",
+            existing_conversation.user_id if existing_conversation else None,
+        )
+
         conversation = (
             db.query(Conversation)
             .filter(
@@ -147,7 +166,7 @@ async def chat_stream(
         conversation = Conversation(user_id=current_user.id)
         db.add(conversation)
         db.flush()
-
+        
     # 2. Save user message
     user_message = Message(
         conversation_id=conversation.id,
@@ -262,13 +281,21 @@ def get_messages(
     db: Session = Depends(get_db),
 ):
 
+    print("REQUESTED CONVERSATION ID:", conversation_id)
+    print("CURRENT USER ID:", current_user.id)
+
     conversation = (
         db.query(Conversation)
         .filter(
             Conversation.id == conversation_id,
-            Conversation.user_id == current_user.id
+            Conversation.user_id == current_user.id,
         )
         .first()
+    )
+
+    print(
+        "CONVERSATION OWNER ID:",
+        conversation.user_id if conversation else None,
     )
 
     if not conversation:

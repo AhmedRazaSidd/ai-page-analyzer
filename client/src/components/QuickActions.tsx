@@ -1,13 +1,6 @@
-import {
-  FileText,
-  HelpCircle,
-  Languages,
-  List,
-} from "lucide-react";
-import {
-  QuickActionType,
-  useAssistantStore,
-} from "../store/assistantStore";
+import { FileText, HelpCircle, Languages, List } from "lucide-react";
+import type { QuickActionType } from "../types";
+import { useAssistantStore } from "../store/assistantStore";
 
 interface Action {
   id: QuickActionType;
@@ -39,9 +32,7 @@ const actions: Action[] = [
 ];
 
 function QuickActions() {
-  const quickAction = useAssistantStore(
-    (state) => state.quickAction
-  );
+  const quickAction = useAssistantStore((state) => state.quickAction);
 
   return (
     <div className="px-4 pb-3">
@@ -56,9 +47,7 @@ function QuickActions() {
           return (
             <button
               key={action.id}
-              onClick={() =>
-                quickAction(action.id)
-              }
+              onClick={() => quickAction(action.id)}
               className="group flex min-h-[62px] flex-col items-center justify-center gap-1 rounded-xl border border-white/5 bg-[#101521] px-1 text-center transition hover:border-violet-500/30 hover:bg-violet-500/5"
             >
               <Icon

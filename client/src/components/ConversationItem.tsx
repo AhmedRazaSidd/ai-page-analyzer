@@ -1,6 +1,6 @@
 import { Check, Pencil, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Conversation } from "../types";
+import type { Conversation } from "../types";
 interface ConversationItemProps {
   conversation: Conversation;
   isActive: boolean;

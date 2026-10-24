@@ -7,8 +7,8 @@ import QuickActions from "./components/QuickActions";
 import Footer from "./components/Footer";
 import Welcome from "./components/Welcome";
 import ConversationSidebar from "./components/ConversationSidebar";
-
 import { useAssistantStore } from "./store/assistantStore";
+import { extractPageContent } from "./lib/page-content";
 
 function App() {
   const [hasSeenWelcome, setHasSeenWelcome] = useState(() => {
@@ -100,6 +100,21 @@ function App() {
     await updateConversationTitle(conversationId, title);
   };
 
+  const handleAnalyzePage = async () => {
+    try {
+      console.log("Extracting page content...");
+
+      const page = await extractPageContent();
+
+      console.log("Page Title:", page.title);
+      console.log("Page URL:", page.url);
+      console.log("Page Content:", page.content);
+      console.log("Content Length:", page.content.length);
+    } catch (error) {
+      console.error("Page extraction failed:", error);
+    }
+  };
+
   if (!hasSeenWelcome) {
     return (
       <Welcome
@@ -118,7 +133,7 @@ function App() {
   return (
     <main className="relative h-150 w-105 overflow-hidden bg-[#050914] text-white">
       <div className="flex h-full w-full flex-col overflow-hidden border border-white/10 bg-[#080d17] shadow-2xl shadow-black/40">
-       <Header
+        <Header
           onOpenConversations={handleOpenConversations}
           onNewConversation={handleNewConversation}
         />
@@ -127,6 +142,13 @@ function App() {
         </div>
 
         <ChatInput />
+        <button
+          type="button"
+          onClick={handleAnalyzePage}
+          className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+        >
+          Analyze This Page
+        </button>
 
         <QuickActions />
 

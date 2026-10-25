@@ -7,6 +7,7 @@ export type QuickActionType =
 export interface ChatContext {
   url?: string;
   title?: string;
+  description?: string;
   page_content?: string;
 }
 
@@ -42,8 +43,7 @@ export interface AssistantState {
   messages: Message[];
   conversations: Conversation[];
   input: string;
-  streamStatus: "idle" | "thinking" | "generating"
-
+  streamStatus: "idle" | "thinking" | "generating";
 
   conversation_id: string | null;
 
@@ -64,7 +64,7 @@ export interface AssistantState {
   clearError: () => void;
 
   clearMessages: () => void;
-  
+
   initializeAnonymousSession: () => Promise<void>;
 
   loadConversations: () => Promise<void>;

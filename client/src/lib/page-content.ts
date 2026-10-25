@@ -1,21 +1,30 @@
 export interface PageContent {
   title: string;
   url: string;
+  description: string;
   content: string;
+  imageUrl?: string;
 }
-
 export async function extractPageContent(): Promise<PageContent> {
-  if (typeof chrome === "undefined" || !chrome.tabs?.query) {
+  console.log("Step 1: extractPageContent called");
+  console.log("Chrome API:", typeof chrome);
+
+  if (
+    typeof chrome === "undefined" ||
+    !chrome.tabs?.query ||
+    !chrome.scripting?.executeScript
+  ) {
     throw new Error(
-      "Chrome Extension API unavailable. Open this app from the installed extension popup.",
+      "Chrome Extension API unavailable. Open the installed extension popup.",
     );
   }
+
   const [tab] = await chrome.tabs.query({
     active: true,
     currentWindow: true,
   });
 
-  if (!tab?.id || !tab.url) {
+  if (tab?.id === undefined || !tab.url) {
     throw new Error("Unable to access the current tab.");
   }
 
@@ -24,33 +33,71 @@ export async function extractPageContent(): Promise<PageContent> {
       "This page cannot be analyzed. Open a regular website first.",
     );
   }
+  console.log("Step 2: Current tab:", tab);
+  console.log("Step 3: Injecting script into tab:", tab.id);
 
-  const results = await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    func: () => {
-      const title = document.title;
-      const url = window.location.href;
+  try {
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => {
+        const title = document.title || "Untitled page";
+        const url = window.location.href;
+        const description =
+          document
+            .querySelector<HTMLMetaElement>('meta[name="description"]')
+            ?.content?.trim() ||
+          document
+            .querySelector<HTMLMetaElement>('meta[property="og:description"]')
+            ?.content?.trim() ||
+          document
+            .querySelector<HTMLMetaElement>('meta[name="twitter:description"]')
+            ?.content?.trim() ||
+          "";
 
-      // Clone the document so the actual page remains unchanged.
-      const clone = document.body.cloneNode(true) as HTMLElement;
+        const imageUrl =
+          document.querySelector<HTMLMetaElement>('meta[property="og:image"]')
+            ?.content ||
+          document.querySelector<HTMLMetaElement>('meta[name="twitter:image"]')
+            ?.content ||
+          undefined;
 
-      clone
-        .querySelectorAll(
-          "script, style, noscript, iframe, svg, nav, footer, header, aside",
-        )
-        .forEach((element) => element.remove());
+        if (!document.body) {
+          return { title, url, description, content: "", imageUrl };
+        }
 
-      const content = (clone.innerText || "").replace(/\s+/g, " ").trim();
+        // Clone the page so the original website is not modified.
+        const clone = document.body.cloneNode(true) as HTMLElement;
 
-      return { title, url, content };
-    },
-  });
+        clone
+          .querySelectorAll(
+            "script, style, noscript, iframe, svg, nav, footer, header, aside",
+          )
+          .forEach((element) => element.remove());
 
-  const page = results[0]?.result;
+        const content = (clone.innerText || clone.textContent || "")
+          .replace(/\s+/g, " ")
+          .trim();
 
-  if (!page?.content) {
-    throw new Error("No readable content found on this page.");
+        return { title, url, description, content, imageUrl };
+      },
+    });
+
+    console.log("Step 4: Script results:", results);
+
+    const page = results[0]?.result as PageContent | undefined;
+
+    if (!page?.content) {
+      throw new Error(
+        "No readable text found. The page may be empty or dynamically rendered.",
+      );
+    }
+
+    return page;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Page extraction failed: ${error.message}`);
+    }
+
+    throw new Error("Page extraction failed due to an unknown error.");
   }
-
-  return page;
 }

@@ -1,42 +1,49 @@
-import {
-  ArrowUp,
-  Loader2,
-} from "lucide-react";
+interface ChatInputProps {
+  context?: ChatContext;
+  onEnsureContext: () => Promise<ChatContext>;
+}
+
+import { useState } from "react";
+import { ArrowUp, Loader2 } from "lucide-react";
 import { useAssistantStore } from "../store/assistantStore";
+import type { ChatContext } from "../types";
 
-function ChatInput() {
-  const {
-    input,
-    setInput,
-    sendMessage,
-    isLoading,
-  } = useAssistantStore();
+interface ChatInputProps {
+  context?: ChatContext;
+  onEnsureContext: () => Promise<ChatContext>;
+}
 
-  const handleSubmit = (
-    e: React.FormEvent
-  ) => {
+function ChatInput({ context, onEnsureContext }: ChatInputProps) {
+  const { input, setInput, sendMessage, isLoading } = useAssistantStore();
+  const [isPreparingContext, setIsPreparingContext] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    sendMessage();
+
+    if (!input.trim() || isLoading || isPreparingContext) return;
+
+    setIsPreparingContext(true);
+
+    try {
+      const messageContext = context ?? (await onEnsureContext());
+      await sendMessage(undefined, messageContext);
+    } catch (error) {
+      console.error("Failed to prepare page context:", error);
+    } finally {
+      setIsPreparingContext(false);
+    }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="px-4 pb-3"
-    >
+    <form onSubmit={handleSubmit} className="px-4 pb-3">
       <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-[#101521] p-1.5 transition focus-within:border-violet-500/50">
         <input
           value={input}
-          onChange={(e) =>
-            setInput(e.target.value)
-          }
+          onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
-            if (
-              e.key === "Enter" &&
-              !e.shiftKey
-            ) {
+            if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              sendMessage();
+              e.currentTarget.form?.requestSubmit();
             }
           }}
           placeholder="Ask anything about this page..."
@@ -45,14 +52,11 @@ function ChatInput() {
 
         <button
           type="submit"
-          disabled={!input.trim() || isLoading}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+          disabled={!input.trim() || isLoading || isPreparingContext}
+          className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-violet-600 text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {isLoading ? (
-            <Loader2
-              size={15}
-              className="animate-spin"
-            />
+          {isLoading || isPreparingContext ? (
+            <Loader2 size={15} className="animate-spin" />
           ) : (
             <ArrowUp size={15} />
           )}

@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict
 class ChatContext(BaseModel):
     url: str | None = None
     title: str | None = None
+    description: str | None = None
     page_content: str | None = None
 
 
@@ -14,6 +15,7 @@ class ChatRequest(BaseModel):
     conversation_id: UUID | None = None
     content: str
     context: ChatContext | None = None
+    action: str | None = None
 
 
 class ChatResponse(BaseModel):

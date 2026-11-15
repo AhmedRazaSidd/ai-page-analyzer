@@ -5,7 +5,12 @@
   "description": "AI-powered page assistant for summaries, Q&A, and translations.",
   "action": {
     "default_title": "AI Page Assistant",
-    "default_popup": "index.html"
+    "default_popup": "index.html",
+    "default_icon": "favicon.svg"
+  },
+  "icons": {
+    "48": "favicon.svg",
+    "128": "favicon.svg"
   },
   "permissions": ["storage", "tabs", "activeTab", "scripting"],
   "host_permissions": ["<all_urls>"]

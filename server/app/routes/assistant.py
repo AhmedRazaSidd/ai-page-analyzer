@@ -16,6 +16,10 @@ from app.schemas.chat import (
     MessageResponse,
     ConversationResponse,
 )
+from app.services.groq_service import (
+    stream_groq_response,
+    get_groq_completion,
+)
 
 
 router = APIRouter(
@@ -46,19 +50,14 @@ def get_conversations(
     "/chat",
     response_model=ChatResponse,
 )
-def chat(
+async def chat(
     payload: ChatRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    
-    print("CHAT USER ID:", current_user.id)
-    print("CONVERSATION ID:", conversation.id)
-
     user = current_user
 
     if payload.conversation_id:
-
         conversation = (
             db.query(Conversation)
             .filter(
@@ -73,53 +72,64 @@ def chat(
                 status_code=404,
                 detail="Conversation not found",
             )
-
     else:
+        title = "New Conversation"
+        if payload.context and payload.context.title:
+            title = payload.context.title[:255]
+        elif payload.content:
+            title = payload.content[:100]
 
         conversation = Conversation(
             user_id=user.id,
+            title=title,
         )
-
         db.add(conversation)
         db.flush()
 
-    # -----------------------------------
-    # 3. Save user message
-    # -----------------------------------
-
+    # Save user message
     user_message = Message(
         conversation_id=conversation.id,
         role="user",
         content=payload.content,
     )
-
     db.add(user_message)
+    db.commit()
 
-    # -----------------------------------
-    # 4. Temporary AI response
-    # -----------------------------------
+    # Load conversation history
+    history_messages = (
+        db.query(Message)
+        .filter(Message.conversation_id == conversation.id)
+        .order_by(Message.created_at.asc())
+        .all()
+    )
+    history = [
+        {"role": msg.role, "content": msg.content}
+        for msg in history_messages
+        if msg.id != user_message.id
+    ]
 
-    assistant_content = "This is a temporary AI response"
+    # Generate real AI response via Groq
+    assistant_content = await get_groq_completion(
+        history=history,
+        current_content=payload.content,
+        context=payload.context,
+        action=payload.action,
+    )
 
     assistant_message = Message(
         conversation_id=conversation.id,
         role="assistant",
         content=assistant_content,
     )
-
     db.add(assistant_message)
-    
-
-
     conversation.updated_at = datetime.now()
-
     db.commit()
-
 
     return ChatResponse(
         conversation_id=conversation.id,
         content=assistant_content,
     )
+
 
 @router.post("/chat/stream")
 async def chat_stream(
@@ -127,27 +137,8 @@ async def chat_stream(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    
-    print("CURRENT USER ID:", current_user.id)
-    print("REQUESTED CONVERSATION ID:", payload.conversation_id)
     # 1. Find existing conversation or create a new one
     if payload.conversation_id:
-        print("CURRENT USER ID:", current_user.id)
-        print("REQUESTED CONVERSATION ID:", payload.conversation_id)
-
-        existing_conversation = (
-            db.query(Conversation)
-            .filter(
-                Conversation.id == payload.conversation_id,
-            )
-            .first()
-        )
-
-        print(
-            "CONVERSATION OWNER ID:",
-            existing_conversation.user_id if existing_conversation else None,
-        )
-
         conversation = (
             db.query(Conversation)
             .filter(
@@ -163,10 +154,19 @@ async def chat_stream(
                 detail="Conversation not found",
             )
     else:
-        conversation = Conversation(user_id=current_user.id)
+        title = "New Conversation"
+        if payload.context and payload.context.title:
+            title = payload.context.title[:255]
+        elif payload.content:
+            title = payload.content[:100]
+
+        conversation = Conversation(
+            user_id=current_user.id,
+            title=title,
+        )
         db.add(conversation)
         db.flush()
-        
+
     # 2. Save user message
     user_message = Message(
         conversation_id=conversation.id,
@@ -191,6 +191,19 @@ async def chat_stream(
         "created_at": user_message.created_at.isoformat(),
     }
 
+    # Retrieve previous conversation history
+    history_messages = (
+        db.query(Message)
+        .filter(Message.conversation_id == conversation.id)
+        .order_by(Message.created_at.asc())
+        .all()
+    )
+    history = [
+        {"role": msg.role, "content": msg.content}
+        for msg in history_messages
+        if msg.id != user_message.id
+    ]
+
     # 3. SSE event helper
     def event(name: str, data: dict) -> str:
         return f"event: {name}\ndata: {json.dumps(data)}\n\n"
@@ -207,28 +220,33 @@ async def chat_stream(
             )
 
             yield event("status", {"status": "thinking"})
-            await asyncio.sleep(1)
 
-            response = (
-                "This is a streamed response. "
-                "Later, we will replace this with the actual AI response."
-            )
+            full_response_parts = []
+            has_started_generating = False
 
-            yield event("status", {"status": "generating"})
+            # Real Groq stream
+            async for chunk in stream_groq_response(
+                history=history,
+                current_content=payload.content,
+                context=payload.context,
+                action=payload.action,
+            ):
+                if not has_started_generating:
+                    has_started_generating = True
+                    yield event("status", {"status": "generating"})
 
-            words = response.split(" ")
-
-            for index, word in enumerate(words):
-                chunk = word if index == 0 else f" {word}"
-
+                full_response_parts.append(chunk)
                 yield event("delta", {"content": chunk})
-                await asyncio.sleep(0.08)
+
+            full_response = "".join(full_response_parts).strip()
+            if not full_response:
+                full_response = "I was unable to generate a response. Please verify the page content and try again."
 
             # 5. Save completed assistant response
             assistant_message = Message(
                 conversation_id=conversation.id,
                 role="assistant",
-                content=response,
+                content=full_response,
             )
 
             db.add(assistant_message)
@@ -246,19 +264,16 @@ async def chat_stream(
                         "conversation_id": conversation_id,
                         "role": "assistant",
                         "content": assistant_message.content,
-                        "created_at": (
-                            assistant_message.created_at.isoformat()
-                        ),
+                        "created_at": assistant_message.created_at.isoformat(),
                     },
                 },
             )
 
-        except Exception:
+        except Exception as e:
             db.rollback()
-
             yield event(
                 "error",
-                {"message": "Unable to complete the response."},
+                {"message": f"Unable to complete response: {str(e)}"},
             )
 
     return StreamingResponse(

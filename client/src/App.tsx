@@ -107,25 +107,79 @@ function App() {
   };
 
   useEffect(() => {
-    chrome.storage.local
-      .get("savedPageContext")
-      .then((result) => {
-        const savedContext = result.savedPageContext as PageContent | undefined;
+    let cancelled = false;
 
-        if (savedContext) {
-          setPageContext(savedContext);
+    const restorePageContext = async () => {
+      try {
+        if (
+          typeof chrome === "undefined" ||
+          !chrome.storage?.local ||
+          !chrome.tabs?.query
+        ) {
+          return;
         }
-      })
-      .catch((error) => {
+
+        const [result, tabs] = await Promise.all([
+          chrome.storage.local.get("savedPageContext"),
+          chrome.tabs.query({
+            active: true,
+            currentWindow: true,
+          }),
+        ]);
+
+        if (cancelled) return;
+
+        const savedContext = result?.savedPageContext as PageContent | undefined;
+        const activeTabUrl = tabs[0]?.url;
+
+        if (savedContext && activeTabUrl && savedContext.url === activeTabUrl) {
+          setPageContext(savedContext);
+        } else {
+          setPageContext(null);
+
+          if (savedContext) {
+            await chrome.storage.local.remove("savedPageContext");
+          }
+        }
+      } catch (error) {
         console.error("Failed to restore page context:", error);
-      })
-      .finally(() => {
-        setIsPageContextLoaded(true);
-      });
+        setPageContext(null);
+      } finally {
+        if (!cancelled) {
+          setIsPageContextLoaded(true);
+        }
+      }
+    };
+
+    void restorePageContext();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleAnalyzePage = async (): Promise<ChatContext> => {
-    if (pageContext) {
+    if (typeof chrome === "undefined" || !chrome.tabs?.query) {
+      throw new Error(
+        "Chrome Extension API unavailable. Open the installed extension popup.",
+      );
+    }
+
+    const [tabs] = await Promise.all([
+      chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      }),
+    ]);
+
+    const activeTabUrl = tabs[0]?.url;
+
+    if (!activeTabUrl) {
+      throw new Error("Unable to access the current webpage.");
+    }
+
+    // Reuse context only if it belongs to the current webpage.
+    if (pageContext && pageContext.url === activeTabUrl) {
       return {
         title: pageContext.title,
         url: pageContext.url,
@@ -134,20 +188,28 @@ function App() {
       };
     }
 
+    // Remove stale context before extracting a new page.
+    setPageContext(null);
+    setIsPageContextExpanded(false);
+
+    if (chrome.storage?.local) {
+      await chrome.storage.local.remove("savedPageContext");
+    }
+
     const page = await extractPageContent();
 
     if (!page?.title || !page.url) {
       throw new Error("Unable to extract current page content.");
     }
 
-    // Update React state
     setPageContext(page);
     setIsPageContextExpanded(false);
 
-    // Persist extracted context across popup sessions
-    await chrome.storage.local.set({
-      savedPageContext: page,
-    });
+    if (chrome.storage?.local) {
+      await chrome.storage.local.set({
+        savedPageContext: page,
+      });
+    }
 
     return {
       title: page.title,
@@ -162,7 +224,9 @@ function App() {
     setIsPageContextExpanded(false);
 
     try {
-      await chrome.storage.local.remove("savedPageContext");
+      if (typeof chrome !== "undefined" && chrome.storage?.local) {
+        await chrome.storage.local.remove("savedPageContext");
+      }
     } catch (error) {
       console.error("Failed to remove saved page context:", error);
     }

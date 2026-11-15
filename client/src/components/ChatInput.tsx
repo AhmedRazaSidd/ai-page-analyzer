@@ -1,8 +1,3 @@
-interface ChatInputProps {
-  context?: ChatContext;
-  onEnsureContext: () => Promise<ChatContext>;
-}
-
 import { useState } from "react";
 import { ArrowUp, Loader2 } from "lucide-react";
 import { useAssistantStore } from "../store/assistantStore";

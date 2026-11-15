@@ -17,7 +17,7 @@ function ChatMessage() {
   }, [messages, isLoading]);
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-5">
+    <div className="px-4 py-4">
       {messages.length === 0 ? (
         <div className="flex min-h-65 flex-col items-center justify-center text-center">
           <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-violet-500/10">

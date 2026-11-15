@@ -39,6 +39,9 @@ function saveConversationId(id: string | null): void {
   }
 }
 
+let activeStreamController: AbortController | null = null;
+let activeStreamId = 0;
+
 async function streamAssistantMessage(
   payload: ChatRequestPayload,
   clearInput: boolean,
@@ -47,6 +50,11 @@ async function streamAssistantMessage(
   const initialState = store.getState();
 
   if (initialState.isLoading) return;
+
+  const controller = new AbortController();
+  const streamId = ++activeStreamId;
+
+  activeStreamController = controller;
 
   const optimisticId = crypto.randomUUID();
   const assistantDraftId = crypto.randomUUID();
@@ -62,6 +70,8 @@ async function streamAssistantMessage(
   let receivedMeta = false;
   let completed = false;
   let streamError: string | null = null;
+
+  const isCurrentStream = () => streamId === activeStreamId;
 
   store.setState((state) => ({
     messages: [...state.messages, optimisticMessage],
@@ -82,17 +92,22 @@ async function streamAssistantMessage(
         Accept: "text/event-stream",
       },
       body: JSON.stringify(payload),
+      signal: controller.signal,
     });
+
+    if (!isCurrentStream()) return;
 
     if (!response.ok) {
       let message = `Request failed (${response.status})`;
+
       try {
         const body = await response.json();
+
         if (typeof body.detail === "string") {
           message = body.detail;
         }
       } catch {
-        // # keep the default message
+        // Keep the default error message.
       }
 
       throw new Error(message);
@@ -104,9 +119,12 @@ async function streamAssistantMessage(
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+
     let buffer = "";
 
     const handleEvent = (block: string) => {
+      if (!isCurrentStream()) return;
+
       let eventName = "message";
       const dataLines: string[] = [];
 
@@ -120,14 +138,31 @@ async function streamAssistantMessage(
 
       if (dataLines.length === 0) return;
 
-      const data = JSON.parse(dataLines.join("\n"));
+      let data: Record<string, unknown>;
+
+      try {
+        data = JSON.parse(dataLines.join("\n"));
+      } catch (error) {
+        console.error(`Invalid SSE JSON for event "${eventName}":`, error);
+        throw error;
+      }
 
       switch (eventName) {
         case "meta": {
-          const userMessage = data.user_message as Message;
+          const userMessage = data.user_message as Message | undefined;
+          const conversationId = data.conversation_id;
+
+          if (
+            !userMessage ||
+            typeof userMessage.id !== "string" ||
+            typeof conversationId !== "string"
+          ) {
+            throw new Error("Invalid conversation metadata received.");
+          }
 
           receivedMeta = true;
-          saveConversationId(data.conversation_id);
+          saveConversationId(conversationId);
+
           store.setState((state) => {
             const previousMessages = state.messages.filter(
               (message) =>
@@ -142,80 +177,117 @@ async function streamAssistantMessage(
 
             const assistantDraft: Message = {
               id: assistantDraftId,
-              conversation_id: data.conversation_id,
+              conversation_id: conversationId,
               role: "assistant",
               content: "",
               created_at: moment().toISOString(),
             };
 
             return {
-              conversation_id: data.conversation_id,
+              conversation_id: conversationId,
               messages: [...messagesWithUser, assistantDraft],
             };
           });
 
           break;
         }
+
         case "status": {
           if (data.status === "thinking" || data.status === "generating") {
             store.setState({
               streamStatus: data.status,
             });
           }
+
           break;
         }
+
         case "delta": {
+          const content = String(data.content ?? "");
+
+          if (!content) break;
+
           store.setState((state) => ({
             messages: state.messages.map((message) =>
               message.id === assistantDraftId
                 ? {
                     ...message,
-                    content: message.content + String(data.content ?? ""),
+                    content: message.content + content,
                   }
                 : message,
             ),
           }));
+
           break;
         }
+
         case "done": {
-          const assistantMessage = data.assistant_message as Message;
+          const assistantMessage = data.assistant_message as
+            | Message
+            | undefined;
 
-          saveConversationId(data.conversation_id);
+          const conversationId =
+            typeof data.conversation_id === "string"
+              ? data.conversation_id
+              : store.getState().conversation_id;
 
-          if (assistantMessage) {
-            store.setState((state) => {
-              const hasDraft = state.messages.some(
-                (message) => message.id === assistantDraftId,
-              );
-
-              return {
-                conversation_id: data.conversation_id,
-                messages: hasDraft
-                  ? state.messages.map((message) =>
-                      message.id === assistantDraftId
-                        ? assistantMessage
-                        : message,
-                    )
-                  : [...state.messages, assistantMessage],
-                isLoading: false,
-                streamStatus: "idle",
-              };
-            });
+          if (conversationId) {
+            saveConversationId(conversationId);
           }
+
+          store.setState((state) => {
+            const hasDraft = state.messages.some(
+              (message) => message.id === assistantDraftId,
+            );
+
+            let messages = state.messages;
+
+            if (assistantMessage) {
+              messages = hasDraft
+                ? state.messages.map((message) =>
+                    message.id === assistantDraftId
+                      ? assistantMessage
+                      : message,
+                  )
+                : state.messages.some(
+                      (message) => message.id === assistantMessage.id,
+                    )
+                  ? state.messages
+                  : [...state.messages, assistantMessage];
+            }
+
+            return {
+              conversation_id: conversationId,
+              messages,
+              isLoading: false,
+              streamStatus: "idle",
+            };
+          });
+
           completed = true;
           break;
         }
-        case "error":
+
+        case "error": {
           streamError =
             typeof data.message === "string"
               ? data.message
               : "The assistant stream failed.";
+
+          break;
+        }
+
+        default:
+          // Ignore unknown SSE event types.
+          break;
       }
     };
 
     try {
       while (true) {
         const { value, done } = await reader.read();
+
+        if (!isCurrentStream()) break;
 
         buffer += decoder.decode(value, { stream: !done });
         buffer = buffer.replace(/\r\n/g, "\n");
@@ -224,18 +296,33 @@ async function streamAssistantMessage(
         buffer = blocks.pop() ?? "";
 
         for (const block of blocks) {
-          if (block.trim()) handleEvent(block);
+          if (!isCurrentStream()) break;
+
+          if (block.trim()) {
+            handleEvent(block);
+          }
+
+          if (streamError) break;
         }
 
-        if (done) break;
+        if (streamError || done || !isCurrentStream()) {
+          if (done && buffer.trim() && !streamError) {
+            handleEvent(buffer);
+            buffer = "";
+          }
 
-        if (buffer.trim()) handleEvent(buffer);
+          break;
+        }
       }
     } finally {
       reader.releaseLock();
     }
 
-    if (streamError) throw new Error(streamError);
+    if (!isCurrentStream()) return;
+
+    if (streamError) {
+      throw new Error(streamError);
+    }
 
     if (!completed) {
       throw new Error("The stream ended before completion.");
@@ -243,6 +330,13 @@ async function streamAssistantMessage(
 
     await store.getState().loadConversations();
   } catch (error) {
+    // Ignore cancelled or superseded requests.
+    if (!isCurrentStream()) return;
+
+    if (error instanceof Error && error.name === "AbortError") {
+      return;
+    }
+
     console.error("Assistant streaming error:", error);
 
     store.setState((state) => ({
@@ -258,7 +352,33 @@ async function streamAssistantMessage(
           ? error.message
           : "Unable to get a response. Please try again.",
     }));
+  } finally {
+    if (activeStreamController === controller) {
+      activeStreamController = null;
+    }
+
+    // Only the current request can reset its loading state.
+    if (isCurrentStream()) {
+      store.setState({
+        isLoading: false,
+        streamStatus: "idle",
+      });
+    }
   }
+}
+
+function cancelActiveStream() {
+  activeStreamId += 1;
+
+  const controller = activeStreamController;
+  activeStreamController = null;
+
+  controller?.abort();
+
+  useAssistantStore.setState({
+    isLoading: false,
+    streamStatus: "idle",
+  });
 }
 
 export const useAssistantStore = create<AssistantState>((set, get) => ({
@@ -322,9 +442,10 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
   // -----------------------------------
   // Clear conversation
   // -----------------------------------
-
   clearMessages: () => {
+    cancelActiveStream();
     saveConversationId(null);
+
     set({
       messages: [],
       input: "",
@@ -341,7 +462,7 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
     } catch (error) {
       console.error("Anonymous session initialization error:", error);
       set({
-        error: "Unable to initilize anonymous session",
+        error: "Unable to initialize anonymous session",
       });
     }
   },
@@ -373,13 +494,14 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
   // -----------------------------------
 
   loadMessages: async (conversation_id: string) => {
-    saveConversationId(conversation_id)
-    
+    cancelActiveStream();
+    saveConversationId(conversation_id);
+
     set({
       isLoading: true,
       error: null,
       conversation_id,
-      streamStatus: "generating",
+      streamStatus: "idle",
     });
 
     try {
@@ -387,15 +509,22 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
         `/assistant/conversations/${conversation_id}/messages`,
       );
 
+      // Ignore the response if the user switched conversations meanwhile.
+      if (get().conversation_id !== conversation_id) return;
+
       set({
         messages: data,
         isLoading: false,
+        streamStatus: "idle",
       });
     } catch (error) {
+      if (get().conversation_id !== conversation_id) return;
+
       console.error("Load messages error:", error);
 
       set({
         isLoading: false,
+        streamStatus: "idle",
         error: "Unable to load conversation.",
       });
     }
@@ -458,7 +587,7 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
           : {}),
       }));
     } catch (error) {
-      console.error("Delete conversation erorr:", error);
+      console.error("Delete conversation error:", error);
       set({
         error: "Unable to delete conversation.",
       });

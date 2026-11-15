@@ -1,14 +1,11 @@
 import { History, Sparkles, X, Plus } from "lucide-react";
 
-import { useAssistantStore } from "../store/assistantStore";
-
 interface HeaderProps {
   onOpenConversations: () => void;
   onNewConversation: () => void;
 }
 
 function Header({ onOpenConversations, onNewConversation }: HeaderProps) {
-  const { setSettingsOpen } = useAssistantStore();
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-white/10 px-4">

@@ -55,11 +55,15 @@ export interface AssistantState {
 
   error: string | null;
 
+  translateLanguage: string;
+
   setInput: (value: string) => void;
 
   setSettingsOpen: (value: boolean) => void;
 
   setContextActive: (value: boolean) => void;
+
+  setTranslateLanguage: (lang: string) => void;
 
   clearError: () => void;
 

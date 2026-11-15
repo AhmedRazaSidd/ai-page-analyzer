@@ -260,7 +260,7 @@ function App() {
     : undefined;
 
   return (
-    <main className="relative h-150 w-105 overflow-hidden bg-[#050914] text-white">
+    <main className="relative h-screen w-full min-w-[380px] overflow-hidden bg-[#050914] text-white">
       <div className="flex h-full w-full flex-col overflow-hidden border border-white/10 bg-[#080d17] shadow-2xl shadow-black/40">
         <Header
           onOpenConversations={handleOpenConversations}

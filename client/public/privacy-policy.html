@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — AI Page Assistant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #050914;
+      color: #cbd5e1;
+      line-height: 1.7;
+      padding: 48px 24px;
+    }
+    .container { max-width: 760px; margin: 0 auto; }
+    h1 { color: #f1f5f9; font-size: 2rem; margin-bottom: 8px; }
+    .subtitle { color: #64748b; font-size: 0.875rem; margin-bottom: 40px; }
+    h2 {
+      color: #e2e8f0;
+      font-size: 1.1rem;
+      margin-top: 36px;
+      margin-bottom: 10px;
+      padding-left: 12px;
+      border-left: 3px solid #7c3aed;
+    }
+    p { margin-bottom: 12px; font-size: 0.95rem; }
+    ul { padding-left: 20px; margin-bottom: 12px; }
+    li { margin-bottom: 6px; font-size: 0.95rem; }
+    a { color: #a78bfa; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .badge {
+      display: inline-block;
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.3);
+      color: #c4b5fd;
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 0.75rem;
+      margin-bottom: 24px;
+    }
+    footer { margin-top: 60px; color: #334155; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Privacy Policy</h1>
+    <p class="subtitle">Last updated: November 2026</p>
+    <span class="badge">AI Page Assistant — Chrome Extension</span>
+
+    <h2>1. Overview</h2>
+    <p>
+      AI Page Assistant ("the Extension") is a Chrome Extension that lets you interact with
+      web pages using AI. We are committed to protecting your privacy. This policy explains
+      what data we collect, how we use it, and your rights.
+    </p>
+
+    <h2>2. Data We Collect</h2>
+    <ul>
+      <li>
+        <strong>Page Content:</strong> When you explicitly click "Analyze Page" or use a
+        Quick Action, the visible text content of the active tab is extracted and sent to
+        our backend server for AI processing. This is done on-demand only — the Extension
+        does not automatically read pages in the background.
+      </li>
+      <li>
+        <strong>Your Messages:</strong> The questions and prompts you type in the chat
+        interface are stored in our PostgreSQL database linked to your anonymous session.
+      </li>
+      <li>
+        <strong>Anonymous Session ID:</strong> A session identifier (cookie) is stored
+        locally and in our database to associate your conversation history with your browser
+        session. No name, email, or account is required to use the Extension.
+      </li>
+      <li>
+        <strong>Page URL and Title:</strong> The URL and title of the analyzed page are
+        stored as metadata for conversation context.
+      </li>
+    </ul>
+
+    <h2>3. Data We Do NOT Collect</h2>
+    <ul>
+      <li>We do not collect your personal identity, name, or email (for anonymous users).</li>
+      <li>We do not track your browsing activity or history outside of explicit analysis requests.</li>
+      <li>We do not sell, share, or monetize your data to any third party.</li>
+      <li>We do not use your data to train AI models.</li>
+    </ul>
+
+    <h2>4. How We Use Your Data</h2>
+    <p>Collected data is used exclusively to:</p>
+    <ul>
+      <li>Generate AI responses via the Groq API (page content is sent to Groq for inference).</li>
+      <li>Store and retrieve your conversation history within the Extension.</li>
+      <li>Maintain your session across browser restarts.</li>
+    </ul>
+
+    <h2>5. Third-Party Services</h2>
+    <p>
+      Page content and your messages are processed by
+      <a href="https://groq.com" target="_blank" rel="noreferrer">Groq</a> for AI inference.
+      Groq's privacy policy governs their handling of this data. We do not share your data
+      with any other third parties.
+    </p>
+
+    <h2>6. Data Storage & Retention</h2>
+    <p>
+      Conversation data is stored in a PostgreSQL database on our backend server. Anonymous
+      session data is retained as long as your session cookie is valid. You may delete your
+      conversation history at any time from within the Extension.
+    </p>
+
+    <h2>7. Your Rights & Data Deletion</h2>
+    <p>You can:</p>
+    <ul>
+      <li>Delete individual conversations from the sidebar inside the Extension.</li>
+      <li>Clear all your data by clearing browser cookies (which invalidates your session).</li>
+      <li>
+        Request full data deletion by contacting us at
+        <a href="mailto:privacy@ai-page-assistant.example.com">privacy@ai-page-assistant.example.com</a>.
+      </li>
+    </ul>
+
+    <h2>8. Security</h2>
+    <p>
+      Data is transmitted over HTTPS. Anonymous session tokens are used to authenticate requests.
+      We do not store payment information or sensitive personal data.
+    </p>
+
+    <h2>9. Changes to This Policy</h2>
+    <p>
+      We may update this Privacy Policy from time to time. We will notify you of significant
+      changes by updating the "Last updated" date above. Continued use of the Extension
+      constitutes acceptance of the updated policy.
+    </p>
+
+    <h2>10. Contact</h2>
+    <p>
+      For privacy inquiries, contact us at:
+      <a href="mailto:privacy@ai-page-assistant.example.com">privacy@ai-page-assistant.example.com</a>
+    </p>
+
+    <footer>
+      &copy; 2026 AI Page Assistant. All rights reserved.
+    </footer>
+  </div>
+</body>
+</html>

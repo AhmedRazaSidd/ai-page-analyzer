@@ -10,11 +10,11 @@ import type {
   QuickActionType,
 } from "../types";
 
-const actionLabels: Record<QuickActionType, string> = {
-  summarize: "Summarize this page.",
-  question: "What are the main points discussed in this article?",
-  "key-points": "Show me the key points.",
-  translate: "Translate this page to Spanish.",
+const actionLabels: Record<QuickActionType, (lang?: string) => string> = {
+  summarize: () => "Summarize this page.",
+  question: () => "What are the main points discussed in this article?",
+  "key-points": () => "Show me the key points.",
+  translate: (lang = "Spanish") => `Translate this page to ${lang}.`,
 };
 
 const ACTIVE_CONVERSATION_KEY = "ai-page-assistant:active-conversation";
@@ -79,6 +79,8 @@ async function streamAssistantMessage(
     isLoading: true,
     streamStatus: "thinking",
     error: null,
+
+  translateLanguage: "Spanish",
   }));
 
   const baseURL = (api.defaults.baseURL ?? "").replace(/\/$/, "");
@@ -403,6 +405,8 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
 
   error: null,
 
+  translateLanguage: "Spanish",
+
   // -----------------------------------
   // Set input
   // -----------------------------------
@@ -437,6 +441,11 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
   clearError: () =>
     set({
       error: null,
+    }),
+
+  setTranslateLanguage: (lang: string) =>
+    set({
+      translateLanguage: lang,
     }),
 
   // -----------------------------------
@@ -507,6 +516,8 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
     set({
       isLoading: true,
       error: null,
+
+  translateLanguage: "Spanish",
       conversation_id,
       streamStatus: "idle",
     });
@@ -563,9 +574,11 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
   quickAction: async (action, context) => {
     if (get().isLoading) return;
 
+    const lang = get().translateLanguage;
+
     await streamAssistantMessage(
       {
-        content: actionLabels[action],
+        content: actionLabels[action](action === "translate" ? lang : undefined),
         conversation_id: get().conversation_id,
         context,
         action,

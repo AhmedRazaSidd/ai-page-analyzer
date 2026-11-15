@@ -4,7 +4,7 @@ from typing import Any
 
 from groq import AsyncGroq, GroqError
 
-from app.core.config import GROQ_API_KEY, GROQ_MODEL
+from app.core.config import GROQ_API_KEY, GROQ_MAX_TOKENS, GROQ_MODEL
 from app.schemas.chat import ChatContext
 
 logger = logging.getLogger(__name__)
@@ -98,7 +98,7 @@ async def stream_groq_response(
             model=GROQ_MODEL,
             messages=messages,  # type: ignore
             temperature=0.4,
-            max_tokens=2048,
+            max_tokens=GROQ_MAX_TOKENS,
             stream=True,
         )
 
@@ -137,7 +137,7 @@ async def get_groq_completion(
             model=GROQ_MODEL,
             messages=messages,  # type: ignore
             temperature=0.4,
-            max_tokens=2048,
+            max_tokens=GROQ_MAX_TOKENS,
             stream=False,
         )
         return completion.choices[0].message.content or ""

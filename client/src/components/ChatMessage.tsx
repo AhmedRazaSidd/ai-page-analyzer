@@ -1,7 +1,7 @@
-import { Sparkles } from "lucide-react";
+import { Check, Copy, Sparkles } from "lucide-react";
 import { useAssistantStore } from "../store/assistantStore";
 import moment from "moment";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 function ChatMessage() {
@@ -9,6 +9,19 @@ function ChatMessage() {
   const messages = useAssistantStore((state) => state.messages);
   const isLoading = useAssistantStore((state) => state.isLoading);
   const streamStatus = useAssistantStore((state) => state.streamStatus);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = async (id: string, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => {
+        setCopiedId((curr) => (curr === id ? null : curr));
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to copy message:", error);
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
@@ -142,15 +155,43 @@ function ChatMessage() {
                     ) : null}
                   </div>
 
-                  {message.created_at && (
-                    <time
-                      dateTime={message.created_at}
-                      className={`mt-1 block text-right text-[9px] ${
-                        isUser ? "text-violet-200" : "text-gray-500"
-                      }`}
-                    >
-                      {moment(message.created_at).format("h:mm A")}
-                    </time>
+                  {isUser ? (
+                    message.created_at && (
+                      <time
+                        dateTime={message.created_at}
+                        className="mt-1 block text-right text-[9px] text-violet-200"
+                      >
+                        {moment(message.created_at).format("h:mm A")}
+                      </time>
+                    )
+                  ) : (
+                    <div className="mt-2 flex items-center justify-between border-t border-white/[0.06] pt-1.5 text-[10px] text-gray-500">
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(message.id, message.content)}
+                        className="flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 text-gray-400 transition hover:bg-white/10 hover:text-white"
+                        title="Copy message to clipboard"
+                        aria-label="Copy message"
+                      >
+                        {copiedId === message.id ? (
+                          <>
+                            <Check size={11} className="text-emerald-400" />
+                            <span className="text-emerald-400 font-medium">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={11} />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+
+                      {message.created_at && (
+                        <time dateTime={message.created_at} className="text-[9px]">
+                          {moment(message.created_at).format("h:mm A")}
+                        </time>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

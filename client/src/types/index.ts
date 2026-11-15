@@ -83,4 +83,5 @@ export interface AssistantState {
     conversationId: string,
     title: string,
   ) => Promise<void>;
+  stopGeneration: () => void;
 }

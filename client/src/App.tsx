@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AlertCircle, X } from "lucide-react";
 
 import Header from "./components/Header";
 import ChatMessage from "./components/ChatMessage";
@@ -36,6 +37,8 @@ function App() {
     clearMessages,
     deleteConversation,
     updateConversationTitle,
+    error,
+    clearError,
   } = useAssistantStore();
 
   useEffect(() => {
@@ -390,10 +393,17 @@ function App() {
                       </span>
                     </div>
 
-                    <p className="mt-2 text-[10px] tabular-nums text-slate-500">
-                      {pageContext.content.length.toLocaleString()} characters
-                      extracted
-                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <p className="text-[10px] tabular-nums text-slate-500">
+                        {pageContext.content.length.toLocaleString()} characters
+                        extracted
+                      </p>
+                      {pageContext.selectedText && (
+                        <span className="rounded border border-violet-500/30 bg-violet-500/20 px-1.5 py-0.5 text-[9px] font-medium text-violet-300">
+                          Highlighted text
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Card actions */}
@@ -463,6 +473,23 @@ function App() {
 
           <ChatMessage />
         </div>
+
+        {error && (
+          <div className="mx-4 mb-2 flex items-center justify-between gap-2 rounded-xl border border-red-500/25 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+            <div className="flex min-w-0 items-center gap-2">
+              <AlertCircle size={14} className="shrink-0 text-red-400" />
+              <span className="truncate">{error}</span>
+            </div>
+            <button
+              type="button"
+              onClick={clearError}
+              className="shrink-0 cursor-pointer text-red-400 hover:text-white"
+              aria-label="Dismiss error"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        )}
 
         <ChatInput context={chatContext} onEnsureContext={handleAnalyzePage} />
         <QuickActions

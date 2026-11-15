@@ -4,6 +4,7 @@ export interface PageContent {
   description: string;
   content: string;
   imageUrl?: string;
+  selectedText?: string;
 }
 export async function extractPageContent(): Promise<PageContent> {
   console.log("Step 1: extractPageContent called");
@@ -61,8 +62,10 @@ export async function extractPageContent(): Promise<PageContent> {
             ?.content ||
           undefined;
 
+        const selectedText = window.getSelection()?.toString().trim() || "";
+
         if (!document.body) {
-          return { title, url, description, content: "", imageUrl };
+          return { title, url, description, content: "", imageUrl, selectedText };
         }
 
         // Clone the page so the original website is not modified.
@@ -74,11 +77,15 @@ export async function extractPageContent(): Promise<PageContent> {
           )
           .forEach((element) => element.remove());
 
-        const content = (clone.innerText || clone.textContent || "")
+        const rawContent = (clone.innerText || clone.textContent || "")
           .replace(/\s+/g, " ")
           .trim();
 
-        return { title, url, description, content, imageUrl };
+        const content = selectedText
+          ? `[USER HIGHLIGHTED TEXT]:\n"${selectedText}"\n\n[FULL PAGE CONTENT]:\n${rawContent}`
+          : rawContent;
+
+        return { title, url, description, content, imageUrl, selectedText };
       },
     });
 

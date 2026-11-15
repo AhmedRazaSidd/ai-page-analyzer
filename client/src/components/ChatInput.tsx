@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowUp, Loader2 } from "lucide-react";
+import { ArrowUp, Loader2, Square } from "lucide-react";
 import { useAssistantStore } from "../store/assistantStore";
 import type { ChatContext } from "../types";
 
@@ -9,7 +9,8 @@ interface ChatInputProps {
 }
 
 function ChatInput({ context, onEnsureContext }: ChatInputProps) {
-  const { input, setInput, sendMessage, isLoading } = useAssistantStore();
+  const { input, setInput, sendMessage, isLoading, stopGeneration } =
+    useAssistantStore();
   const [isPreparingContext, setIsPreparingContext] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -41,21 +42,36 @@ function ChatInput({ context, onEnsureContext }: ChatInputProps) {
               e.currentTarget.form?.requestSubmit();
             }
           }}
-          placeholder="Ask anything about this page..."
-          className="min-w-0 flex-1 bg-transparent px-2 text-xs text-white outline-none placeholder:text-gray-600"
+          disabled={isLoading}
+          placeholder={
+            isLoading ? "Assistant is responding..." : "Ask anything about this page..."
+          }
+          className="min-w-0 flex-1 bg-transparent px-2 text-xs text-white outline-none placeholder:text-gray-600 disabled:opacity-50"
         />
 
-        <button
-          type="submit"
-          disabled={!input.trim() || isLoading || isPreparingContext}
-          className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-violet-600 text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {isLoading || isPreparingContext ? (
-            <Loader2 size={15} className="animate-spin" />
-          ) : (
-            <ArrowUp size={15} />
-          )}
-        </button>
+        {isLoading ? (
+          <button
+            type="button"
+            onClick={stopGeneration}
+            className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-red-500/30 bg-red-500/15 text-red-400 transition hover:bg-red-500/25 hover:text-red-300"
+            title="Stop generating"
+            aria-label="Stop generating"
+          >
+            <Square size={13} className="fill-current" />
+          </button>
+        ) : (
+          <button
+            type="submit"
+            disabled={!input.trim() || isPreparingContext}
+            className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-violet-600 text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {isPreparingContext ? (
+              <Loader2 size={15} className="animate-spin" />
+            ) : (
+              <ArrowUp size={15} />
+            )}
+          </button>
+        )}
       </div>
     </form>
   );

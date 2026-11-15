@@ -456,6 +456,13 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
     });
   },
 
+  // -----------------------------------
+  // Stop active stream generation
+  // -----------------------------------
+  stopGeneration: () => {
+    cancelActiveStream();
+  },
+
   initializeAnonymousSession: async () => {
     try {
       await api.post("/assistant/session");

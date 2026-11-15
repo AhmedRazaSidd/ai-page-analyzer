@@ -13,3 +13,6 @@ if not DATABASE_URL:
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
 GROQ_MAX_TOKENS = int(os.getenv("GROQ_MAX_TOKENS", "800"))
+JWT_SECRET = os.getenv("JWT_SECRET", "ai-page-assistant-secret-key-2026")
+JWT_ALGORITHM = "HS256"
+

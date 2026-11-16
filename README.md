@@ -8,7 +8,7 @@
 ![Tailwind](https://img.shields.io/badge/Tailwind_CSS_v4-06b6d4.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Python_3.13+-009688.svg)
 ![Groq](https://img.shields.io/badge/Inference-Groq_LPU-f55036.svg)
-![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791.svg)
+![Neon PostgreSQL](https://img.shields.io/badge/Cloud_Database-Neon_PostgreSQL-00e599.svg)
 
 **A high-performance Chrome Extension (Manifest V3) that provides instant, streaming AI analysis, summarization, translation, and interactive Q&A for any active webpage.**
 
@@ -50,7 +50,7 @@ flowchart LR
         Router[FastAPI Routes\n/assistant/chat/stream]
         Auth[Anonymous Auth & Session Dep]
         GroqService[Groq SDK Service\nLPU Inference Engine]
-        DB[(PostgreSQL\nConversations & Messages)]
+        DB[(Neon PostgreSQL\nCloud Serverless DB)]
     end
 
     DOM -->|Extract Clean Text| Scraper
@@ -80,7 +80,8 @@ flowchart LR
 * **Package Management**: `uv` (Fastest Python package installer and resolver)
 * **Inference Engine**: Groq SDK (`qwen/qwen3.8-27b` / LPU hardware)
 * **Streaming Protocol**: Server-Sent Events (SSE) with `text/event-stream`
-* **ORM & Database**: SQLAlchemy 2.0, Alembic migrations, PostgreSQL
+* **Cloud Database**: Neon Serverless PostgreSQL with auto-scaling & SSL
+* **ORM & Migrations**: SQLAlchemy 2.0 with `psycopg` (v3) driver, Alembic migrations, connection pooling (`pool_recycle=300`, `pool_pre_ping=True`)
 * **Security & Auth**: `bcrypt` password hashing, `pyjwt`, cookie-based sessions, regex-scoped CORS
 
 ---
@@ -128,7 +129,7 @@ ai-page-assistant/
 ### 1. Prerequisites
 * **Node.js** v20+ and `npm`
 * **Python** 3.13+ with **`uv`** installed (`pip install uv` or `curl -LsSf https://astral.sh/uv/install.sh`)
-* **PostgreSQL** instance running locally on port `5432`
+* **Neon PostgreSQL Database** (Free cloud database at [neon.tech](https://neon.tech/)) or a local PostgreSQL instance
 * **Groq API Key** (Free tier available at [console.groq.com](https://console.groq.com/))
 
 ---
@@ -141,14 +142,20 @@ ai-page-assistant/
    ```
 
 2. **Configure Environment Variables**:
-   Create a `.env` file in `server/.env`:
+   Copy `.env.example` or create a `.env` file in `server/.env`:
    ```env
-   DATABASE_URL="postgresql+psycopg://postgres:your_password@localhost:5432/ai_page_analyzer"
+   # Neon PostgreSQL Connection (both postgresql:// and postgresql+psycopg:// supported)
+   DATABASE_URL="postgresql://username:password@ep-your-project-id-pooler.region.aws.neon.tech/neondb?sslmode=require"
+
+   # Groq AI Inference
    GROQ_API_KEY="gsk_your_groq_api_key_here"
    GROQ_MODEL="qwen/qwen3.8-27b"
    GROQ_MAX_TOKENS=800
+
+   # Auth Secret
    JWT_SECRET="your-custom-secret-key"
    ```
+   > **Note**: The backend dynamically normalizes the URL to `postgresql+psycopg://` for SQLAlchemy 2.0 and enforces `sslmode=require` for Neon automatically.
 
 3. **Install Dependencies & Run Migrations**:
    ```bash

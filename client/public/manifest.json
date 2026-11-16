@@ -24,13 +24,6 @@
   },
   "permissions": ["storage", "tabs", "activeTab", "scripting", "sidePanel"],
   "host_permissions": ["<all_urls>"],
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content-scripts/page-content.js"],
-      "run_at": "document_idle"
-    }
-  ],
   "commands": {
     "open_side_panel": {
       "suggested_key": {

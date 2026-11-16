@@ -10,18 +10,18 @@ function Header({ onOpenConversations, onNewConversation }: HeaderProps) {
   return (
     <header className="flex h-16 items-center justify-between border-b border-white/10 px-4">
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-violet-500 to-purple-700 shadow-lg shadow-violet-500/20">
-          <Sparkles size={18} className="text-white" />
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden shadow-lg shadow-violet-500/25 border border-white/10">
+          <img src="favicon.svg" alt="PagePilot AI" className="h-full w-full object-cover" />
         </div>
 
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-sm font-semibold text-white">
-              AI Page Assistant
+            <h1 className="text-sm font-bold tracking-tight text-white">
+              PagePilot <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">AI</span>
             </h1>
 
-            <span className="rounded bg-violet-600 px-1.5 py-0.5 text-[8px] font-bold text-white">
-              BETA
+            <span className="rounded border border-violet-500/30 bg-violet-500/15 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-violet-300">
+              PRO
             </span>
           </div>
         </div>

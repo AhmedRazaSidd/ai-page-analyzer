@@ -25,16 +25,15 @@ function WelcomeScreen({ onOpenAssistant }: WelcomeScreenProps) {
   return (
     <main className="flex h-162.5 w-105 flex-col overflow-hidden bg-background px-6 pb-8 pt-10 text-foreground">
       {/* Heading */}
-      <h1 className="text-3xl font-extrabold leading-tight tracking-tight">
-        AI Page Assistant
-      </h1>
-      <h2 className="mb-4 bg-primary-gradient bg-clip-text text-3xl font-extrabold leading-tight tracking-tight text-transparent">
-        Complete Flow
-      </h2>
-
-      <p className="mb-6 text-sm leading-relaxed text-muted">
-        Smart AI assistant to understand any web page instantly.
-      </p>
+      <div className="mb-4 flex items-center gap-3">
+        <img src="favicon.svg" alt="PagePilot AI" className="h-12 w-12 rounded-2xl shadow-xl shadow-violet-500/20 border border-white/10" />
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-white">
+            PagePilot <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">AI</span>
+          </h1>
+          <p className="text-xs text-slate-400">Your Intelligent Webpage Co-Pilot</p>
+        </div>
+      </div>
 
       {/* Legend */}
       <ul className="mb-8 space-y-2.5">

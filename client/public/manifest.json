@@ -1,15 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "AI Page Assistant",
+  "name": "PagePilot AI — Webpage Co-Pilot",
   "version": "1.0.0",
-  "description": "AI-powered page assistant for summaries, Q&A, and translations.",
+  "description": "Intelligent AI co-pilot for any webpage. Instant streaming summaries, contextual Q&A, and one-click translations in your side panel.",
   "icons": {
     "16": "icon-16.png",
     "48": "icon-48.png",
     "128": "icon-128.png"
   },
   "action": {
-    "default_title": "AI Page Assistant",
+    "default_title": "PagePilot AI",
     "default_icon": {
       "16": "icon-16.png",
       "48": "icon-48.png",
@@ -37,7 +37,7 @@
         "default": "Ctrl+Shift+Y",
         "mac": "Command+Shift+Y"
       },
-      "description": "Open AI Page Assistant Side Panel"
+      "description": "Open PagePilot AI Side Panel"
     }
   }
 }

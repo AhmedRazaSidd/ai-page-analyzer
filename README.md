@@ -1,4 +1,4 @@
-# ⚡ AI Page Assistant
+# ⚡ PagePilot AI — Intelligent Webpage Co-Pilot
 
 <div align="center">
 

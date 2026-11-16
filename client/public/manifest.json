@@ -32,12 +32,12 @@
     }
   ],
   "commands": {
-    "_execute_action": {
+    "open_side_panel": {
       "suggested_key": {
         "default": "Ctrl+Shift+Y",
         "mac": "Command+Shift+Y"
       },
-      "description": "Open AI Page Assistant"
+      "description": "Open AI Page Assistant Side Panel"
     }
   }
 }

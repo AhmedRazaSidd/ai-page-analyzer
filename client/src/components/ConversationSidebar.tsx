@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { ArrowLeft, X } from "lucide-react";
 import type { Conversation } from "../types";
 import ConversationItem from "./ConversationItem";
 import NewConversationButton from "./NewConversationButton";
@@ -21,16 +23,41 @@ function ConversationSidebar({
   handleDelete,
   handleUpdateTitle,
 }: ConversationSidebarProps) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   return (
-    <aside className="absolute inset-0 z-50 flex flex-col bg-[#080d17]">
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-        <h2 className="text-sm font-semibold">Conversations</h2>
+    <aside className="absolute inset-0 z-50 flex h-full w-full flex-col bg-[#080d17]">
+      <div className="flex items-center justify-between border-b border-white/10 px-3 py-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-white/10 hover:text-white"
+          title="Back to Chat (Esc)"
+        >
+          <ArrowLeft size={14} className="text-violet-400" />
+          <span>Back to Chat</span>
+        </button>
+
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+          History
+        </h2>
 
         <button
+          type="button"
           onClick={onClose}
-          className="text-white/50 transition hover:text-white"
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white"
+          aria-label="Close"
+          title="Close"
         >
-          ✕
+          <X size={15} />
         </button>
       </div>
 

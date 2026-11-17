@@ -23,7 +23,7 @@ const legend: LegendItem[] = [
 
 function WelcomeScreen({ onOpenAssistant }: WelcomeScreenProps) {
   return (
-    <main className="flex h-162.5 w-105 flex-col overflow-hidden bg-background px-6 pb-8 pt-10 text-foreground">
+    <main className="flex h-full w-full flex-col overflow-y-auto bg-background px-6 pb-8 pt-10 text-foreground">
       {/* Heading */}
       <div className="mb-4 flex items-center gap-3">
         <img src="favicon.svg" alt="PagePilot AI" className="h-12 w-12 rounded-2xl shadow-xl shadow-violet-500/20 border border-white/10" />

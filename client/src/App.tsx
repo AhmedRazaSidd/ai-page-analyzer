@@ -260,8 +260,8 @@ function App() {
     : undefined;
 
   return (
-    <main className="relative h-screen w-full min-w-[380px] overflow-hidden bg-[#050914] text-white">
-      <div className="flex h-full w-full flex-col overflow-hidden border border-white/10 bg-[#080d17] shadow-2xl shadow-black/40">
+    <main className="relative h-full w-full overflow-hidden bg-[#050914] text-white">
+      <div className="flex h-full w-full flex-col overflow-hidden bg-[#080d17]">
         <Header
           onOpenConversations={handleOpenConversations}
           onNewConversation={handleNewConversation}

@@ -1,4 +1,4 @@
-# ⚡ Breify AI — Intelligent Webpage Co-Pilot
+# ⚡ Breify AI
 
 <div align="center">
 

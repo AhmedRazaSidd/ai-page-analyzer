@@ -11,13 +11,13 @@ function Header({ onOpenConversations, onNewConversation }: HeaderProps) {
     <header className="flex h-16 items-center justify-between border-b border-white/10 px-4">
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden shadow-lg shadow-violet-500/25 border border-white/10">
-          <img src="favicon.svg" alt="Briefigy AI" className="h-full w-full object-cover" />
+          <img src="favicon.svg" alt="Breify AI" className="h-full w-full object-cover" />
         </div>
 
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-sm font-bold tracking-tight text-white">
-              Briefigy <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">AI</span>
+              Breify <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">AI</span>
             </h1>
 
             <span className="rounded border border-violet-500/30 bg-violet-500/15 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-violet-300">

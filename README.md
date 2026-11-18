@@ -1,4 +1,4 @@
-# ⚡ PagePilot AI — Intelligent Webpage Co-Pilot
+# ⚡ Briefigy AI — Intelligent Webpage Co-Pilot
 
 <div align="center">
 

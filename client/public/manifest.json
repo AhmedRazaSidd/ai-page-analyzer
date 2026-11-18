@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "PagePilot AI — Webpage Co-Pilot",
-  "version": "1.0.3",
+  "name": "Briefigy AI — Webpage Co-Pilot",
+  "version": "1.0.4",
   "description": "Intelligent AI co-pilot for any webpage. Instant streaming summaries, contextual Q&A, and one-click translations in your side panel.",
   "icons": {
     "16": "icon-16.png",
@@ -9,7 +9,7 @@
     "128": "icon-128.png"
   },
   "action": {
-    "default_title": "PagePilot AI",
+    "default_title": "Briefigy AI",
     "default_icon": {
       "16": "icon-16.png",
       "48": "icon-48.png",
@@ -38,7 +38,7 @@
         "default": "Ctrl+Shift+Y",
         "mac": "Command+Shift+Y"
       },
-      "description": "Open PagePilot AI Side Panel"
+      "description": "Open Briefigy AI Side Panel"
     }
   }
 }

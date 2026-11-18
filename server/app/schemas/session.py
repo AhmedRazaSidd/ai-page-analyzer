@@ -3,4 +3,5 @@ from pydantic import BaseModel
 
 class AnonymousSessionResponse(BaseModel):
     user_id: UUID
-    session_id:UUID
+    session_id: UUID
+    token: str | None = None

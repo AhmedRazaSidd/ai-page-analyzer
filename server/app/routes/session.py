@@ -27,8 +27,15 @@ def create_anonymous_session(
 ):
     now = datetime.now(timezone.utc)
 
-    # 1. Check existing anonymous cookie
-    raw_token = request.cookies.get("anonymous_token")
+    # 1. Check existing anonymous token from header or cookie
+    raw_token = (
+        request.headers.get("x-anonymous-token")
+        or request.cookies.get("anonymous_token")
+    )
+    if not raw_token:
+        auth_header = request.headers.get("authorization")
+        if auth_header and auth_header.lower().startswith("bearer "):
+            raw_token = auth_header[7:].strip()
 
     if raw_token:
         token_hash = hashlib.sha256(
@@ -59,6 +66,7 @@ def create_anonymous_session(
                 return AnonymousSessionResponse(
                     user_id=user.id,
                     session_id=session.id,
+                    token=raw_token,
                 )
 
     # 3. Create a new guest only when necessary
@@ -83,12 +91,13 @@ def create_anonymous_session(
     db.commit()
     db.refresh(session)
 
+    # Use secure=True, samesite="none" for cross-origin extension requests
     response.set_cookie(
         key="anonymous_token",
         value=raw_token,
         httponly=True,
-        secure=False,  # Local HTTP development only
-        samesite="lax",
+        secure=True,
+        samesite="none",
         max_age=60 * 60 * 24 * 30,
         path="/",
     )
@@ -96,4 +105,5 @@ def create_anonymous_session(
     return AnonymousSessionResponse(
         user_id=user.id,
         session_id=session.id,
+        token=raw_token,
     )

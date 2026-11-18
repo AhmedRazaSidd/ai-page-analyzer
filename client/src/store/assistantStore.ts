@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import api from "../lib/axios";
+import api, { getStoredToken, saveStoredToken } from "../lib/axios";
 import moment from "moment";
 
 import type {
@@ -86,13 +86,20 @@ async function streamAssistantMessage(
   const baseURL = (api.defaults.baseURL ?? "").replace(/\/$/, "");
 
   try {
+    const token = getStoredToken();
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream",
+    };
+    if (token) {
+      headers["x-anonymous-token"] = token;
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${baseURL}/assistant/chat/stream`, {
       method: "POST",
       credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "text/event-stream",
-      },
+      headers,
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
@@ -474,7 +481,10 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
 
   initializeAnonymousSession: async () => {
     try {
-      await api.post("/assistant/session");
+      const { data } = await api.post<{ token?: string }>("/assistant/session");
+      if (data?.token) {
+        saveStoredToken(data.token);
+      }
     } catch (error) {
       console.error("Anonymous session initialization error:", error);
       set({

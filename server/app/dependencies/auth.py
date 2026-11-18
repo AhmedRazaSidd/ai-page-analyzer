@@ -1,24 +1,33 @@
 import hashlib
 from datetime import datetime,timezone
 
-from fastapi import Cookie, Depends, HTTPException
+from fastapi import Cookie, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
 from app.db.models import AnonymousSession,User
 
 def get_current_user(
-    anonymous_token:str | None = Cookie(default=None),
+    anonymous_token: str | None = Cookie(default=None),
+    x_anonymous_token: str | None = Header(default=None, alias="x-anonymous-token"),
+    authorization: str | None = Header(default=None, alias="authorization"),
     db: Session = Depends(get_db)
 ):
-    
-    if not anonymous_token:
+    token = x_anonymous_token
+    if not token and authorization:
+        parts = authorization.split()
+        if len(parts) == 2 and parts[0].lower() == "bearer":
+            token = parts[1]
+    if not token:
+        token = anonymous_token
+
+    if not token:
         raise HTTPException(
             status_code=401,
             detail="Anonymous session not found"
         )
     
-    token_hash = hashlib.sha256(anonymous_token.encode()).hexdigest()
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
     
     anonymous_session = (
         db.query(AnonymousSession).filter(AnonymousSession.token_hash == token_hash).first()

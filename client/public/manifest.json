@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PagePilot AI — Webpage Co-Pilot",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Intelligent AI co-pilot for any webpage. Instant streaming summaries, contextual Q&A, and one-click translations in your side panel.",
   "icons": {
     "16": "icon-16.png",
@@ -28,6 +28,9 @@
     "activeTab",
     "scripting",
     "sidePanel"
+  ],
+  "host_permissions": [
+    "<all_urls>"
   ],
   "commands": {
     "open_side_panel": {

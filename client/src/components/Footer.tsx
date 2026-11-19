@@ -11,31 +11,31 @@ function Footer() {
   );
 
   return (
-    <footer className="flex items-center justify-between border-t border-white/5 px-4 py-3">
+    <footer className="flex items-center justify-between border-t border-white/5 px-4 py-2.5">
       <div className="flex items-center gap-2">
         <Globe2
-          size={12}
-          className="text-gray-500"
+          size={14}
+          className="text-slate-400"
         />
 
-        <span className="text-[9px] text-gray-500">
+        <span className="text-xs text-slate-400">
           {isContextActive
             ? "Current page context is active"
             : "Page context is inactive"}
         </span>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <CheckCircle2
-          size={11}
+          size={13}
           className={
             isContextActive
               ? "text-emerald-400"
-              : "text-gray-600"
+              : "text-slate-500"
           }
         />
 
-        <button className="text-[9px] text-violet-400 hover:text-violet-300">
+        <button className="text-xs font-medium text-violet-400 transition hover:text-violet-300">
           Learn more
         </button>
       </div>

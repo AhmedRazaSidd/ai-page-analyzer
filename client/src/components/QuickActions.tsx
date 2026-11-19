@@ -18,10 +18,10 @@ interface Action {
 }
 
 const actions: Action[] = [
-  { id: "summarize", label: "Summarize\nPage", icon: FileText },
-  { id: "question", label: "Ask a\nQuestion", icon: HelpCircle },
-  { id: "key-points", label: "Key\nPoints", icon: List },
-  { id: "translate", label: "Translate\nPage", icon: Languages },
+  { id: "summarize", label: "Summarize Page", icon: FileText },
+  { id: "question", label: "Ask a Question", icon: HelpCircle },
+  { id: "key-points", label: "Key Points", icon: List },
+  { id: "translate", label: "Translate Page", icon: Languages },
 ];
 
 const LANGUAGES = [
@@ -71,6 +71,11 @@ function QuickActions({
       await quickAction(action, actionContext);
     } catch (error) {
       console.error("Failed to execute quick action:", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to execute quick action.";
+      useAssistantStore.getState().setError(message);
     } finally {
       setPreparingAction(null);
     }
@@ -83,7 +88,7 @@ function QuickActions({
 
   return (
     <div className="px-4 pb-3">
-      <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-gray-500">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
         Quick Actions
       </p>
 
@@ -100,9 +105,9 @@ function QuickActions({
                 {showLangDropdown && (
                   <div
                     ref={dropdownRef}
-                    className="absolute bottom-full left-1/2 z-50 mb-2 w-32 -translate-x-1/2 overflow-hidden rounded-xl border border-white/10 bg-[#131926] shadow-xl"
+                    className="absolute bottom-full left-1/2 z-50 mb-2 w-36 -translate-x-1/2 overflow-hidden rounded-xl border border-white/10 bg-[#131926] shadow-xl"
                   >
-                    <p className="border-b border-white/[0.07] px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+                    <p className="border-b border-white/[0.07] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                       Translate to
                     </p>
                     {LANGUAGES.map((lang) => (
@@ -127,23 +132,23 @@ function QuickActions({
                   type="button"
                   onClick={() => void handleAction("translate")}
                   disabled={isLoading || preparingAction !== null}
-                  className="group relative flex min-h-[62px] w-full flex-col items-center justify-center gap-1 rounded-xl border border-white/5 bg-[#101521] px-1 text-center transition hover:border-violet-500/30 hover:bg-violet-500/5 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="group relative flex min-h-[72px] w-full flex-col items-center justify-center gap-1.5 rounded-xl border border-white/5 bg-[#101521] px-2 py-2 text-center transition hover:border-violet-500/30 hover:bg-violet-500/5 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isPreparing ? (
-                    <Loader2 size={16} className="animate-spin text-violet-400" />
+                    <Loader2 size={18} className="animate-spin text-violet-400" />
                   ) : (
                     <Languages
-                      size={16}
+                      size={18}
                       className="text-violet-400 transition group-hover:text-violet-300"
                     />
                   )}
 
-                  <span className="whitespace-pre-line text-[9px] leading-3 text-gray-400 group-hover:text-gray-200">
-                    {isPreparing ? "Preparing..." : "Translate\nPage"}
+                  <span className="text-center text-xs font-medium leading-tight text-slate-300 group-hover:text-white">
+                    {isPreparing ? "Preparing..." : action.label}
                   </span>
 
                   {/* Language badge */}
-                  <span className="mt-0.5 rounded bg-violet-500/20 px-1 py-0 text-[8px] font-semibold text-violet-400">
+                  <span className="mt-0.5 rounded-md bg-violet-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-violet-300">
                     {translateLanguage}
                   </span>
 
@@ -154,11 +159,11 @@ function QuickActions({
                       e.stopPropagation();
                       setShowLangDropdown((prev) => !prev);
                     }}
-                    className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded text-slate-600 hover:bg-white/10 hover:text-slate-300"
+                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-md text-slate-400 transition hover:bg-white/10 hover:text-white"
                     aria-label="Choose language"
                     tabIndex={-1}
                   >
-                    <ChevronDown size={10} />
+                    <ChevronDown size={12} />
                   </button>
                 </button>
 
@@ -179,18 +184,18 @@ function QuickActions({
               type="button"
               onClick={() => void handleAction(action.id)}
               disabled={isLoading || preparingAction !== null}
-              className="group flex min-h-[62px] flex-col items-center justify-center gap-1 rounded-xl border border-white/5 bg-[#101521] px-1 text-center transition hover:border-violet-500/30 hover:bg-violet-500/5 disabled:cursor-not-allowed disabled:opacity-50"
+              className="group flex min-h-[72px] flex-col items-center justify-center gap-1.5 rounded-xl border border-white/5 bg-[#101521] px-2 py-2 text-center transition hover:border-violet-500/30 hover:bg-violet-500/5 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isPreparing ? (
-                <Loader2 size={16} className="animate-spin text-violet-400" />
+                <Loader2 size={18} className="animate-spin text-violet-400" />
               ) : (
                 <Icon
-                  size={16}
+                  size={18}
                   className="text-violet-400 transition group-hover:text-violet-300"
                 />
               )}
 
-              <span className="whitespace-pre-line text-[9px] leading-3 text-gray-400 group-hover:text-gray-200">
+              <span className="text-center text-xs font-medium leading-tight text-slate-300 group-hover:text-white">
                 {isPreparing ? "Preparing..." : action.label}
               </span>
             </button>

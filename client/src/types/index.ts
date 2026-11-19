@@ -66,6 +66,7 @@ export interface AssistantState {
   setTranslateLanguage: (lang: string) => void;
 
   clearError: () => void;
+  setError: (error: string | null) => void;
 
   clearMessages: () => void;
 

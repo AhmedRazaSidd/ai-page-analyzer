@@ -46,7 +46,7 @@ function ChatInput({ context, onEnsureContext }: ChatInputProps) {
           placeholder={
             isLoading ? "Assistant is responding..." : "Ask anything about this page..."
           }
-          className="min-w-0 flex-1 bg-transparent px-2 text-xs text-white outline-none placeholder:text-gray-600 disabled:opacity-50"
+          className="min-w-0 flex-1 bg-transparent px-2 text-sm text-white outline-none placeholder:text-slate-500 disabled:opacity-50"
         />
 
         {isLoading ? (

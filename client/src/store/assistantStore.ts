@@ -442,12 +442,17 @@ export const useAssistantStore = create<AssistantState>((set, get) => ({
     }),
 
   // -----------------------------------
-  // Clear error
+  // Error handling
   // -----------------------------------
 
   clearError: () =>
     set({
       error: null,
+    }),
+
+  setError: (error: string | null) =>
+    set({
+      error,
     }),
 
   setTranslateLanguage: (lang: string) =>

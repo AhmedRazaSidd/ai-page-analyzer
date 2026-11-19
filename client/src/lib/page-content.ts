@@ -102,6 +102,15 @@ export async function extractPageContent(): Promise<PageContent> {
     return page;
   } catch (error) {
     if (error instanceof Error) {
+      if (
+        error.message.includes("Extension manifest must request permission") ||
+        error.message.includes("Cannot access contents of url")
+      ) {
+        throw new Error(
+          "Permission to access this page was denied. Please reload the extension in chrome://extensions and ensure 'Site access' is set to 'On all sites'.",
+        );
+      }
+
       throw new Error(`Page extraction failed: ${error.message}`);
     }
 
